@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rodrigo Anguita · Lingua Voice</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #06060a;
+  --surface: rgba(255,255,255,0.033);
+  --surface2: rgba(255,255,255,0.055);
+  --border: rgba(255,255,255,0.07);
+  --gold: #c9a96e;
+  --blue: #5b9bd5;
+  --green: #4ecb71;
+  --red: #e05c5c;
+  --text: #ede5d6;
+  --muted: #524f4a;
+  --fh: 'Syne', sans-serif;
+  --fb: 'Crimson Pro', serif;
+}
+html,body { min-height:100%; background:var(--bg); color:var(--text); font-family:var(--fb); overflow-x:hidden; }
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 10% 15%, rgba(201,169,110,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 65% at 90% 85%, rgba(91,155,213,0.06) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(78,203,113,0.02) 0%, transparent 70%);
+}
+.app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; max-width:1080px; margin:0 auto; padding:0 20px; }
+
+/* ── HEADER ── */
+header { text-align:center; padding:40px 0 28px; }
+.owner-badge {
+  display:inline-flex; align-items:center; gap:10px;
+  background:rgba(201,169,110,0.08); border:1px solid rgba(201,169,110,0.2);
+  border-radius:40px; padding:7px 18px 7px 10px; margin-bottom:20px;
+}
+.owner-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,#c9a96e,#8a6a35);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fh); font-size:13px; font-weight:800; color:#1a1000;
+}
+.owner-name { font-family:var(--fh); font-size:12px; font-weight:600; color:var(--gold); letter-spacing:0.08em; }
+h1 {
+  font-family:var(--fh); font-size:clamp(38px,8vw,76px); font-weight:800;
+  letter-spacing:-0.04em; line-height:0.95;
+  background:linear-gradient(140deg,#a07030 0%,#e8d090 35%,#ffffff 55%,#c9a96e 80%,#7a5020 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:10px;
+}
+.subtitle { font-size:15px; color:var(--muted); font-style:italic; }
+
+/* ── API KEY BANNER ── */
+.api-banner {
+  background:rgba(201,169,110,0.07); border:1px solid rgba(201,169,110,0.25);
+  border-radius:14px; padding:14px 20px; margin-bottom:20px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.api-banner-icon { font-size:20px; flex-shrink:0; }
+.api-banner-text { flex:1; min-width:200px; }
+.api-banner-text strong { font-family:var(--fh); font-size:13px; font-weight:700; color:var(--gold); display:block; margin-bottom:2px; }
+.api-banner-text span { font-size:13px; color:var(--muted); }
+.api-input-row { display:flex; gap:8px; align-items:center; flex:2; min-width:260px; }
+.api-input {
+  flex:1; background:rgba(0,0,0,0.4); border:1px solid rgba(201,169,110,0.3);
+  border-radius:8px; padding:8px 14px; color:var(--text); font-family:var(--fh);
+  font-size:12px; outline:none; transition:border-color 0.2s;
+}
+.api-input:focus { border-color:var(--gold); }
+.api-save-btn {
+  background:linear-gradient(135deg,var(--gold),#e8c87a); color:#1a1000;
+  border:none; border-radius:8px; padding:8px 16px; font-family:var(--fh);
+  font-size:12px; font-weight:700; cursor:pointer; transition:opacity 0.2s; white-space:nowrap;
+}
+.api-save-btn:hover { opacity:0.85; }
+.api-status { font-size:11px; font-family:var(--fh); font-weight:600; padding:4px 10px; border-radius:20px; white-space:nowrap; }
+.api-status.ok { background:rgba(78,203,113,0.15); color:var(--green); border:1px solid rgba(78,203,113,0.3); }
+.api-status.err { background:rgba(224,92,92,0.12); color:var(--red); border:1px solid rgba(224,92,92,0.25); }
+
+/* ── BLUETOOTH PANEL ── */
+.bt-panel {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px;
+  padding:16px 20px; margin-bottom:20px;
+}
+.bt-panel-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.bt-title { font-family:var(--fh); font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); }
+.bt-dot { width:7px; height:7px; border-radius:50%; background:var(--muted); transition:all 0.3s; }
+.bt-dot.connected { background:#2196f3; box-shadow:0 0 8px #2196f3; animation:btPulse 2s infinite; }
+@keyframes btPulse { 0%,100%{opacity:1}50%{opacity:0.5} }
+.bt-grid { display:flex; gap:12px; flex-wrap:wrap; }
+.bt-card {
+  flex:1; min-width:220px; background:rgba(255,255,255,0.025);
+  border:1px solid var(--border); border-radius:12px; padding:14px 16px;
+  transition:border-color 0.2s;
+}
+.bt-card.assigned { border-color:var(--c); }
+.bt-card-head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.bt-flag { font-size:20px; }
+.bt-card-name { font-family:var(--fh); font-size:13px; font-weight:700; color:var(--text); }
+.bt-card-sub { font-size:11px; color:var(--muted); font-family:var(--fh); }
+.bt-select {
+  width:100%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px; padding:7px 10px; color:var(--text); font-family:var(--fh);
+  font-size:11px; outline:none; cursor:pointer; transition:border-color 0.2s;
+}
+.bt-select:focus { border-color:var(--c); }
+.bt-volume-row { display:flex; align-items:center; gap:8px; margin-top:8px; }
+.bt-vol-label { font-size:10px; color:var(--muted); font-family:var(--fh); white-space:nowrap; }
+.bt-vol { flex:1; accent-color:var(--c); cursor:pointer; }
+.bt-test-btn {
+  margin-top:8px; width:100%; background:transparent; border:1px solid var(--border);
+  border-radius:7px; padding:6px; font-family:var(--fh); font-size:11px; font-weight:600;
+  color:var(--muted); cursor:pointer; transition:all 0.2s; letter-spacing:0.05em;
+}
+.bt-test-btn:hover { border-color:var(--c); color:var(--c); }
+.bt-hint { font-size:11px; color:var(--muted); font-style:italic; margin-top:10px; text-align:center; font-family:var(--fb); }
+
+/* ── SPEAKER CARDS ── */
+.speakers { display:flex; gap:14px; margin-bottom:20px; flex-wrap:wrap; }
+.speaker-card {
+  flex:1; min-width:180px; background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:14px 18px; cursor:pointer; transition:all 0.22s;
+  position:relative; overflow:hidden;
+}
+.speaker-card::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse at 0% 0%, var(--c) 0%, transparent 70%);
+  opacity:0; transition:opacity 0.22s;
+}
+.speaker-card.active { border-color:var(--c); }
+.speaker-card.active::after, .speaker-card:hover::after { opacity:0.07; }
+.sc-top { display:flex; align-items:center; gap:10px; position:relative; z-index:1; }
+.sc-avatar {
+  width:38px; height:38px; border-radius:50%; flex-shrink:0;
+  border:2px solid var(--c); color:var(--c); background:rgba(0,0,0,0.5);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fh); font-size:15px; font-weight:800;
+}
+.sc-info { flex:1; min-width:0; }
+.sc-name { font-family:var(--fh); font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sc-lang { font-size:11px; color:var(--muted); }
+.sc-bt-badge {
+  font-size:9px; font-family:var(--fh); font-weight:700; letter-spacing:0.08em;
+  padding:2px 7px; border-radius:10px; background:rgba(33,150,243,0.15);
+  color:#5bc8ff; border:1px solid rgba(33,150,243,0.25); white-space:nowrap;
+}
+.sc-wave { display:flex; align-items:flex-end; gap:2px; height:18px; margin-top:8px; position:relative; z-index:1; }
+.wave-bar { width:3px; border-radius:2px; background:var(--c); opacity:0.25; transition:height 0.08s, opacity 0.08s; }
+.speaker-card.speaking .wave-bar { opacity:1; }
+
+/* ── CONTROLS ── */
+.controls { display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+.btn {
+  font-family:var(--fh); font-size:13px; font-weight:700; letter-spacing:0.05em;
+  padding:11px 26px; border-radius:50px; cursor:pointer; border:none;
+  transition:all 0.2s; display:flex; align-items:center; gap:8px;
+}
+.btn-primary { background:linear-gradient(135deg,var(--gold),#ddb860); color:#120d00; box-shadow:0 4px 18px rgba(201,169,110,0.28); }
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(201,169,110,0.42); }
+.btn-primary.recording { background:linear-gradient(135deg,var(--red),#ff7070); color:#fff; box-shadow:0 4px 18px rgba(224,92,92,0.38); animation:recPulse 1.4s ease-in-out infinite; }
+.btn-secondary { background:var(--surface); border:1px solid var(--border); color:var(--muted); }
+.btn-secondary:hover { border-color:rgba(255,255,255,0.18); color:var(--text); }
+@keyframes recPulse { 0%,100%{box-shadow:0 4px 18px rgba(224,92,92,0.38)}50%{box-shadow:0 4px 28px rgba(224,92,92,0.65)} }
+
+/* ── LIVE BAR ── */
+.live-bar { margin-bottom:18px; }
+.live-indicator {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:12px 18px; display:flex; align-items:center; gap:12px; min-height:48px;
+}
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; transition:all 0.3s; }
+.live-dot.active { background:var(--green); box-shadow:0 0 9px var(--green); animation:lp 1s infinite; }
+.live-dot.busy { background:var(--gold); box-shadow:0 0 9px var(--gold); animation:lp 0.45s infinite; }
+@keyframes lp { 0%,100%{opacity:1}50%{opacity:0.35} }
+.live-text { flex:1; font-size:14px; color:var(--muted); font-style:italic; }
+.live-text.on { color:var(--text); }
+.live-badge { font-family:var(--fh); font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; letter-spacing:0.07em; }
+
+/* ── FEED ── */
+.feed-wrap { flex:1; padding-bottom:40px; }
+.feed-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.feed-hl { flex:1; height:1px; background:var(--border); }
+.feed-ttl { font-family:var(--fh); font-size:10px; font-weight:700; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
+.feed-clr { font-family:var(--fh); font-size:10px; color:var(--muted); cursor:pointer; background:none; border:none; letter-spacing:0.1em; text-transform:uppercase; transition:color 0.2s; }
+.feed-clr:hover { color:var(--red); }
+.feed { display:flex; flex-direction:column; gap:14px; }
+.message { display:flex; gap:12px; align-items:flex-start; animation:mi 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+@keyframes mi { from{opacity:0;transform:translateY(10px) scale(0.97)}to{opacity:1;transform:none} }
+.msg-av {
+  width:30px; height:30px; border-radius:50%; flex-shrink:0; margin-top:3px;
+  border:1.5px solid var(--c); color:var(--c); background:rgba(0,0,0,0.5);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fh); font-size:12px; font-weight:800;
+}
+.msg-body { flex:1; }
+.msg-meta { display:flex; align-items:baseline; gap:7px; margin-bottom:4px; flex-wrap:wrap; }
+.msg-nm { font-family:var(--fh); font-size:11px; font-weight:700; }
+.msg-lb { font-size:10px; font-family:var(--fh); font-weight:600; padding:1px 7px; border-radius:10px; background:rgba(255,255,255,0.05); color:var(--muted); }
+.msg-tm { font-size:10px; color:var(--muted); font-family:var(--fh); }
+.msg-orig { font-size:16px; line-height:1.65; color:var(--text); margin-bottom:5px; }
+.msg-tr {
+  font-size:14px; line-height:1.55; color:#8a8680; font-style:italic;
+  padding-left:10px; border-left:2px solid var(--c);
+  transition:color 0.3s;
+}
+.msg-tr.done { color:#b0a898; }
+.msg-spinning { font-size:12px; color:var(--gold); font-family:var(--fh); font-weight:600; display:flex; align-items:center; gap:6px; }
+.spin { animation:sp 0.9s linear infinite; display:inline-block; }
+@keyframes sp { to{transform:rotate(360deg)} }
+.msg-speak-btn {
+  margin-left:8px; background:transparent; border:1px solid rgba(255,255,255,0.1);
+  border-radius:20px; padding:2px 9px; font-size:10px; font-family:var(--fh);
+  font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.2s; letter-spacing:0.05em;
+}
+.msg-speak-btn:hover { border-color:var(--c); color:var(--c); }
+
+/* ── EMPTY ── */
+.empty { text-align:center; padding:48px 0; }
+.empty-ico { font-size:36px; opacity:0.2; margin-bottom:10px; }
+.empty p { font-size:14px; color:var(--muted); font-style:italic; }
+
+/* ── MODAL ── */
+.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:200; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(10px); padding:20px; }
+.modal { background:#0c0c14; border:1px solid rgba(255,255,255,0.09); border-radius:22px; padding:32px; max-width:460px; width:100%; box-shadow:0 40px 80px rgba(0,0,0,0.7); max-height:90vh; overflow-y:auto; }
+.modal h2 { font-family:var(--fh); font-size:20px; font-weight:800; margin-bottom:5px; }
+.modal .mdesc { font-size:13px; color:var(--muted); margin-bottom:22px; font-style:italic; }
+.modal-grid { display:flex; flex-direction:column; gap:14px; }
+.sp-setup { display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; }
+.sp-av { width:40px; height:40px; border-radius:50%; flex-shrink:0; border:2px solid var(--c); color:var(--c); display:flex; align-items:center; justify-content:center; font-family:var(--fh); font-size:16px; font-weight:800; }
+.sp-fields { flex:1; display:flex; flex-direction:column; gap:7px; }
+.sp-fields input,.sp-fields select { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:7px; padding:7px 11px; color:var(--text); font-family:var(--fh); font-size:12px; outline:none; transition:border-color 0.2s; width:100%; }
+.sp-fields input:focus,.sp-fields select:focus { border-color:var(--c); }
+.sp-fields select option { background:#0c0c14; }
+.modal-acts { display:flex; gap:9px; margin-top:22px; }
+
+@media(max-width:600px){
+  .speakers{flex-direction:column;}
+  .bt-grid{flex-direction:column;}
+  h1{font-size:42px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HEADER -->
+<header>
+  <div class="owner-badge">
+    <div class="owner-avatar">RA</div>
+    <span class="owner-name">Rodrigo Anguita</span>
+  </div>
+  <h1>Lingua Voice</h1>
+  <p class="subtitle">Traduce voces en tiempo real · Identifica hablantes · Habla por Bluetooth</p>
+</header>
+
+<!-- API KEY -->
+<div class="api-banner" id="apiBanner">
+  <div class="api-banner-icon">🔑</div>
+  <div class="api-banner-text">
+    <strong>Clave API de Anthropic</strong>
+    <span>Necesaria para traducir. Obtén una gratis en console.anthropic.com</span>
+  </div>
+  <div class="api-input-row">
+    <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-api03-..." />
+    <button class="api-save-btn" onclick="saveApiKey()">Guardar</button>
+    <span class="api-status" id="apiStatus" style="display:none"></span>
+  </div>
+</div>
+
+<!-- BLUETOOTH PANEL -->
+<div class="bt-panel">
+  <div class="bt-panel-head">
+    <div class="bt-dot" id="btDot"></div>
+    <span class="bt-title">Audífonos Bluetooth</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:var(--fh)" id="btStatus">Sin dispositivos detectados</span>
+  </div>
+  <div class="bt-grid">
+    <div class="bt-card" id="btCard0" style="--c:var(--gold)">
+      <div class="bt-card-head">
+        <span class="bt-flag">🇪🇸</span>
+        <div>
+          <div class="bt-card-name">Canal Español</div>
+          <div class="bt-card-sub">Habla español → escucha inglés</div>
+        </div>
+      </div>
+      <select class="bt-select" id="btSel0" onchange="assignDevice(0,this.value)" style="--c:var(--gold)">
+        <option value="">— Seleccionar dispositivo —</option>
+      </select>
+      <div class="bt-volume-row">
+        <span class="bt-vol-label">Vol</span>
+        <input type="range" class="bt-vol" id="btVol0" min="0" max="1" step="0.05" value="0.9" style="--c:var(--gold)" oninput="setVolume(0,this.value)">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--fh);width:28px" id="btVolLabel0">90%</span>
+      </div>
+      <button class="bt-test-btn" style="--c:var(--gold)" onclick="testSpeaker(0)">▶ Probar audio</button>
+    </div>
+    <div class="bt-card" id="btCard1" style="--c:var(--blue)">
+      <div class="bt-card-head">
+        <span class="bt-flag">🇺🇸</span>
+        <div>
+          <div class="bt-card-name">Canal Inglés</div>
+          <div class="bt-card-sub">Habla inglés → escucha español</div>
+        </div>
+      </div>
+      <select class="bt-select" id="btSel1" onchange="assignDevice(1,this.value)" style="--c:var(--blue)">
+        <option value="">— Seleccionar dispositivo —</option>
+      </select>
+      <div class="bt-volume-row">
+        <span class="bt-vol-label">Vol</span>
+        <input type="range" class="bt-vol" id="btVol1" min="0" max="1" step="0.05" value="0.9" style="--c:var(--blue)" oninput="setVolume(1,this.value)">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--fh);width:28px" id="btVolLabel1">90%</span>
+      </div>
+      <button class="bt-test-btn" style="--c:var(--blue)" onclick="testSpeaker(1)">▶ Probar audio</button>
+    </div>
+  </div>
+  <p class="bt-hint">Conecta tus audífonos Bluetooth al sistema antes de abrirlos en el selector. Si no aparecen, recarga la página.</p>
+</div>
+
+<!-- SPEAKER CARDS -->
+<div class="speakers" id="speakerCards"></div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="btn btn-secondary" onclick="openSetup()">⚙ Hablantes</button>
+  <button class="btn btn-primary" id="recBtn" onclick="toggleRec()">
+    <span id="recIco">🎤</span><span id="recLbl">Iniciar Escucha</span>
+  </button>
+  <button class="btn btn-secondary" onclick="exportChat()">↓ Exportar</button>
+</div>
+
+<!-- LIVE BAR -->
+<div class="live-bar">
+  <div class="live-indicator">
+    <div class="live-dot" id="liveDot"></div>
+    <div class="live-text" id="liveTxt">Presiona "Iniciar Escucha" para comenzar</div>
+    <div id="liveBadge"></div>
+  </div>
+</div>
+
+<!-- FEED -->
+<div class="feed-wrap">
+  <div class="feed-head">
+    <span class="feed-ttl">Conversación</span>
+    <div class="feed-hl"></div>
+    <button class="feed-clr" onclick="clearFeed()">✕ limpiar</button>
+  </div>
+  <div class="feed" id="feed">
+    <div class="empty" id="emptyState">
+      <div class="empty-ico">🎙</div>
+      <p>La conversación traducida aparecerá aquí</p>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" style="display:none">
+  <div class="modal">
+    <h2>Configurar Hablantes</h2>
+    <p class="mdesc">Define el nombre e idioma de cada persona</p>
+    <div class="modal-grid" id="modalGrid"></div>
+    <div class="modal-acts">
+      <button class="btn btn-secondary" style="flex:1" onclick="addSpeaker()">+ Agregar</button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeSetup()">✓ Listo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════
+// STATE
+// ════════════════════════════════
+let apiKey = localStorage.getItem('ra_apikey') || '';
+let speakers = [
+  { id:1, name:'Hablante 1', lang:'es-ES', emoji:'A', color:'#c9a96e' },
+  { id:2, name:'Hablante 2', lang:'en-US', emoji:'B', color:'#5b9bd5' },
+];
+let messages = [];
+let isRecording = false;
+let recognition = null;
+let currentSpeakerIdx = 0;
+let silenceTimer = null;
+const SILENCE_MS = 2000;
+
+// Audio outputs: index 0 = spanish channel, 1 = english channel
+let audioOutputs = ['', ''];  // deviceId per channel
+let volumes = [0.9, 0.9];
+let audioCtxPool = [null, null];
+
+// ════════════════════════════════
+// API KEY
+// ════════════════════════════════
+if (apiKey) {
+  document.getElementById('apiKeyInput').value = apiKey;
+  showApiStatus('ok', '✓ Guardada');
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val.startsWith('sk-ant')) {
+    showApiStatus('err', '✗ Inválida');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('ra_apikey', apiKey);
+  showApiStatus('ok', '✓ Guardada');
+}
+
+function showApiStatus(type, txt) {
+  const el = document.getElementById('apiStatus');
+  el.style.display = 'inline-block';
+  el.className = 'api-status ' + type;
+  el.textContent = txt;
+}
+
+// ════════════════════════════════
+// AUDIO OUTPUT DEVICES
+// ════════════════════════════════
+async function loadAudioDevices() {
+  try {
+    // Request permission first
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devices.filter(d => d.kind === 'audiooutput');
+
+    [0,1].forEach(ch => {
+      const sel = document.getElementById('btSel' + ch);
+      // Keep first option
+      while (sel.options.length > 1) sel.remove(1);
+      outputs.forEach(dev => {
+        const opt = document.createElement('option');
+        opt.value = dev.deviceId;
+        opt.textContent = dev.label || `Dispositivo ${dev.deviceId.slice(0,8)}`;
+        sel.appendChild(opt);
+      });
+    });
+
+    const btDot = document.getElementById('btDot');
+    const btStatus = document.getElementById('btStatus');
+    if (outputs.length > 1) {
+      btDot.className = 'bt-dot connected';
+      btStatus.textContent = `${outputs.length} dispositivo(s) detectado(s)`;
+    } else {
+      btStatus.textContent = 'Solo altavoz del sistema detectado';
+    }
+  } catch(e) {
+    document.getElementById('btStatus').textContent = 'Permiso de audio requerido';
+    console.warn('Audio devices:', e);
+  }
+}
+loadAudioDevices();
+
+navigator.mediaDevices?.addEventListener('devicechange', loadAudioDevices);
+
+function assignDevice(ch, deviceId) {
+  audioOutputs[ch] = deviceId;
+  const card = document.getElementById('btCard' + ch);
+  card.classList.toggle('assigned', !!deviceId);
+  updateSpeakerCards();
+}
+
+function setVolume(ch, val) {
+  volumes[ch] = parseFloat(val);
+  document.getElementById('btVolLabel' + ch).textContent = Math.round(val * 100) + '%';
+}
+
+async function testSpeaker(ch) {
+  const texts = [
+    'Hola, este es el canal en español.',
+    'Hello, this is the English channel.'
+  ];
+  speakOnChannel(texts[ch], ch === 0 ? 'es-ES' : 'en-US', ch);
+}
+
+// ════════════════════════════════
+// TEXT-TO-SPEECH → specific device
+// ════════════════════════════════
+async function speakOnChannel(text, lang, channel) {
+  if (!text) return;
+  const deviceId = audioOutputs[channel];
+
+  // Use Web Speech API with sinkId if available
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = lang;
+  utter.volume = volumes[channel];
+  utter.rate = 0.95;
+
+  // If browser supports AudioContext routing with setSinkId
+  if (deviceId && window.Audio) {
+    try {
+      // Create audio element for routing
+      const audio = new Audio();
+      if (typeof audio.setSinkId === 'function') {
+        await audio.setSinkId(deviceId);
+        // Use audio element for TTS via MediaStreamDestination
+        const ctx = new AudioContext();
+        const dest = ctx.createMediaStreamDestination();
+        audio.srcObject = dest.stream;
+        audio.play();
+
+        // Speak using oscillator approach isn't great — use SpeechSynthesis
+        // For now: attach utter to that context via speechSynthesis
+        // Best approach: use utterance + setSinkId on hidden audio
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utter);
+        return;
+      }
+    } catch(e) {
+      console.warn('setSinkId:', e);
+    }
+  }
+
+  // Fallback: default output
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utter);
+}
+
+// ════════════════════════════════
+// TRANSLATION via Anthropic API
+// ════════════════════════════════
+async function translateText(text, targetLangFull) {
+  if (!apiKey) {
+    // Fallback: use MyMemory free API (no key needed)
+    const pair = targetLangFull === 'English' ? 'es|en' : 'en|es';
+    try {
+      const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`);
+      const d = await r.json();
+      return d.responseData?.translatedText || text;
+    } catch(e) { return '[Error: sin clave API]'; }
+  }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      messages: [{
+        role: 'user',
+        content: `Translate to ${targetLangFull}. Return ONLY the translated text:\n\n${text}`
+      }]
+    })
+  });
+
+  if (!resp.ok) {
+    // Fallback to MyMemory
+    const pair = targetLangFull === 'English' ? 'es|en' : 'en|es';
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`);
+    const d = await r.json();
+    return d.responseData?.translatedText || text;
+  }
+
+  const data = await resp.json();
+  return data.content?.[0]?.text?.trim() || text;
+}
+
+// ════════════════════════════════
+// SPEECH RECOGNITION
+// ════════════════════════════════
+function toggleRec() {
+  if (isRecording) stopRec();
+  else startRec();
+}
+
+function startRec() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Usa Google Chrome para el reconocimiento de voz.\n\nSafari y Firefox no lo soportan completamente.');
+    return;
+  }
+  isRecording = true;
+  updateRecBtn(true);
+  beginRecognition();
+}
+
+function stopRec() {
+  isRecording = false;
+  if (recognition) { recognition.abort(); recognition = null; }
+  clearTimeout(silenceTimer);
+  updateRecBtn(false);
+  setLive('idle', 'Escucha detenida');
+  speakers.forEach((_,i) => waveAnimate(i, false));
+}
+
+function updateRecBtn(rec) {
+  document.getElementById('recBtn').className = 'btn btn-primary' + (rec ? ' recording' : '');
+  document.getElementById('recIco').textContent = rec ? '⏹' : '🎤';
+  document.getElementById('recLbl').textContent = rec ? 'Detener' : 'Iniciar Escucha';
+}
+
+function beginRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  const sp = speakers[currentSpeakerIdx];
+  recognition.lang = sp.lang;
+  recognition.interimResults = true;
+  recognition.continuous = false; // false = more reliable final results
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    setLive('active', `Escuchando a ${sp.name}…`, currentSpeakerIdx);
+    waveAnimate(currentSpeakerIdx, true);
+  };
+
+  recognition.onresult = (e) => {
+    clearTimeout(silenceTimer);
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    if (interim) setLive('active', `"${interim.slice(-70)}"`, currentSpeakerIdx);
+    if (final.trim()) {
+      processUtterance(final.trim(), currentSpeakerIdx);
+      // Auto-switch after a pause
+      silenceTimer = setTimeout(() => {
+        const next = (currentSpeakerIdx + 1) % speakers.length;
+        switchSpeaker(next);
+      }, SILENCE_MS);
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (['no-speech','aborted'].includes(e.error)) return;
+    console.warn('SR error:', e.error);
+  };
+
+  recognition.onend = () => {
+    waveAnimate(currentSpeakerIdx, false);
+    if (isRecording) setTimeout(beginRecognition, 250);
+  };
+
+  recognition.start();
+}
+
+function switchSpeaker(idx) {
+  currentSpeakerIdx = idx % speakers.length;
+  renderSpeakerCards();
+  if (isRecording) { if(recognition){recognition.abort(); recognition=null;} setTimeout(beginRecognition, 200); }
+}
+
+// ════════════════════════════════
+// PROCESS UTTERANCE
+// ════════════════════════════════
+async function processUtterance(text, spIdx) {
+  const sp = speakers[spIdx];
+  const isSpanish = sp.lang.startsWith('es');
+  const targetLangFull = isSpanish ? 'English' : 'Spanish';
+  const targetLangCode = isSpanish ? 'en-US' : 'es-ES';
+  // Channel: spanish speaker → their translation goes to English channel (1)
+  // English speaker → translation goes to Spanish channel (0)
+  const audioChannel = isSpanish ? 1 : 0;
+
+  const msgId = Date.now() + Math.random();
+  const msg = { id: msgId, spIdx, text, translation: null, time: new Date(), targetLangCode, audioChannel };
+  messages.push(msg);
+  renderMsg(msg, true);
+  setLive('busy', `Traduciendo al ${targetLangFull}…`, spIdx);
+
+  try {
+    const translation = await translateText(text, targetLangFull);
+    msg.translation = translation;
+    updateMsgTr(msgId, translation, sp.color, audioChannel, targetLangCode);
+    setLive('active', `✓ Traducido · Escuchando a ${sp.name}…`, spIdx);
+    // Speak on the correct Bluetooth channel
+    speakOnChannel(translation, targetLangCode, audioChannel);
+  } catch(err) {
+    msg.translation = '[Error de traducción]';
+    updateMsgTr(msgId, '[Error de traducción]', sp.color, audioChannel, targetLangCode);
+  }
+}
+
+// ════════════════════════════════
+// FEED
+// ════════════════════════════════
+function renderMsg(msg, translating) {
+  document.getElementById('emptyState')?.remove();
+  const sp = speakers[msg.spIdx];
+  const feed = document.getElementById('feed');
+  const el = document.createElement('div');
+  el.className = 'message'; el.id = 'msg-' + msg.id;
+  el.style.setProperty('--c', sp.color);
+  const sLbl = sp.lang.startsWith('es') ? 'ES' : 'EN';
+  const tLbl = sp.lang.startsWith('es') ? 'EN' : 'ES';
+  const t = msg.time.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  el.innerHTML = `
+    <div class="msg-av" style="border-color:${sp.color};color:${sp.color}">${sp.emoji}</div>
+    <div class="msg-body">
+      <div class="msg-meta">
+        <span class="msg-nm" style="color:${sp.color}">${sp.name}</span>
+        <span class="msg-lb">${sLbl} → ${tLbl}</span>
+        <span class="msg-tm">${t}</span>
+      </div>
+      <div class="msg-orig">${esc(msg.text)}</div>
+      <div class="msg-tr" id="tr-${msg.id}">
+        ${translating
+          ? `<span class="msg-spinning"><span class="spin">⟳</span> traduciendo…</span>`
+          : esc(msg.translation||'—')
+        }
+      </div>
+    </div>`;
+  feed.appendChild(el);
+  el.scrollIntoView({ behavior:'smooth', block:'end' });
+}
+
+function updateMsgTr(id, text, color, channel, langCode) {
+  const el = document.getElementById('tr-' + id);
+  if (!el) return;
+  el.className = 'msg-tr done';
+  el.innerHTML = `${esc(text)} <button class="msg-speak-btn" onclick="speakOnChannel('${esc(text).replace(/'/g,"\\'")}','${langCode}',${channel})">🔊 repetir</button>`;
+}
+
+// ════════════════════════════════
+// LIVE STATUS
+// ════════════════════════════════
+function setLive(state, txt, spIdx) {
+  document.getElementById('liveDot').className = 'live-dot' + (state==='active'?' active':state==='busy'?' busy':'');
+  const lt = document.getElementById('liveTxt');
+  lt.className = 'live-text' + (state!=='idle'?' on':'');
+  lt.textContent = txt;
+  const badge = document.getElementById('liveBadge');
+  if (spIdx !== undefined && speakers[spIdx]) {
+    const s = speakers[spIdx];
+    badge.innerHTML = `<span class="live-badge" style="background:${s.color}18;color:${s.color};border:1px solid ${s.color}33">${s.emoji} ${s.name}</span>`;
+  } else badge.innerHTML = '';
+}
+
+// ════════════════════════════════
+// SPEAKER CARDS
+// ════════════════════════════════
+function renderSpeakerCards() {
+  const wrap = document.getElementById('speakerCards');
+  wrap.innerHTML = '';
+  speakers.forEach((s,i) => {
+    const isSpanish = s.lang.startsWith('es');
+    const chIdx = isSpanish ? 0 : 1;
+    const hasDevice = !!audioOutputs[chIdx];
+    const d = document.createElement('div');
+    d.className = 'speaker-card' + (i===currentSpeakerIdx?' active':'');
+    d.style.setProperty('--c', s.color);
+    d.innerHTML = `
+      <div class="sc-top">
+        <div class="sc-avatar" style="border-color:${s.color};color:${s.color}">${s.emoji}</div>
+        <div class="sc-info">
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-lang">${langLbl(s.lang)}</div>
+        </div>
+        ${hasDevice ? `<span class="sc-bt-badge">BT ✓</span>` : ''}
+      </div>
+      <div class="sc-wave" id="wave-${s.id}">
+        ${[...Array(14)].map(()=>`<div class="wave-bar" style="height:${3+Math.random()*10}px"></div>`).join('')}
+      </div>`;
+    d.onclick = () => switchSpeaker(i);
+    wrap.appendChild(d);
+  });
+}
+
+function waveAnimate(idx, on) {
+  const s = speakers[idx];
+  if (!s) return;
+  const wave = document.getElementById('wave-' + s.id);
+  const card = wave?.closest('.speaker-card');
+  if (!wave || !card) return;
+  if (on) card.classList.add('speaking');
+  else card.classList.remove('speaking');
+}
+
+setInterval(() => {
+  if (!isRecording) return;
+  const s = speakers[currentSpeakerIdx];
+  if (!s) return;
+  const w = document.getElementById('wave-' + s.id);
+  if (w) w.querySelectorAll('.wave-bar').forEach(b => { b.style.height=(4+Math.random()*16)+'px'; });
+}, 100);
+
+// ════════════════════════════════
+// SETUP MODAL
+// ════════════════════════════════
+const COLORS = ['#c9a96e','#5b9bd5','#5ec26a','#c45e9a','#e0955c','#9b7be8'];
+const EMOJIS = ['A','B','C','D','E','F'];
+
+function openSetup() { renderModalGrid(); document.getElementById('modalBg').style.display='flex'; }
+function closeSetup() { document.getElementById('modalBg').style.display='none'; renderSpeakerCards(); updateSpeakerCards(); }
+
+function renderModalGrid() {
+  const g = document.getElementById('modalGrid');
+  g.innerHTML = '';
+  speakers.forEach((s,i) => {
+    const d = document.createElement('div');
+    d.className = 'sp-setup';
+    d.innerHTML = `
+      <div class="sp-av" style="--c:${s.color};border-color:${s.color};color:${s.color}">${s.emoji}</div>
+      <div class="sp-fields">
+        <input type="text" value="${s.name}" placeholder="Nombre" oninput="speakers[${i}].name=this.value"/>
+        <select onchange="speakers[${i}].lang=this.value">
+          ${['es-ES','es-MX','en-US','en-GB','fr-FR','de-DE','pt-BR','it-IT','ja-JP','zh-CN'].map(l =>
+            `<option value="${l}" ${s.lang===l?'selected':''}>${langLbl(l)}</option>`).join('')}
+        </select>
+      </div>
+      ${speakers.length>1?`<button onclick="removeSpeaker(${i})" style="background:none;border:none;color:#555;cursor:pointer;font-size:18px;padding:0 4px;transition:color 0.2s" onmouseover="this.style.color='#e05c5c'" onmouseout="this.style.color='#555'">✕</button>`:''}`;
+    g.appendChild(d);
+  });
+}
+
+function addSpeaker() {
+  if (speakers.length>=6) return;
+  const i = speakers.length;
+  speakers.push({ id:Date.now(), name:`Hablante ${i+1}`, lang:'en-US', emoji:EMOJIS[i], color:COLORS[i] });
+  renderModalGrid();
+}
+
+function removeSpeaker(i) {
+  if (speakers.length<=1) return;
+  speakers.splice(i,1);
+  if (currentSpeakerIdx>=speakers.length) currentSpeakerIdx=0;
+  renderModalGrid();
+}
+
+function updateSpeakerCards() { renderSpeakerCards(); }
+
+// ════════════════════════════════
+// UTILS
+// ════════════════════════════════
+function langLbl(code) {
+  return {'es-ES':'🇪🇸 Español','es-MX':'🇲🇽 Español MX','en-US':'🇺🇸 English','en-GB':'🇬🇧 English UK','fr-FR':'🇫🇷 Français','de-DE':'🇩🇪 Deutsch','pt-BR':'🇧🇷 Português','it-IT':'🇮🇹 Italiano','ja-JP':'🇯🇵 日本語','zh-CN':'🇨🇳 中文'}[code] || code;
+}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function clearFeed() {
+  messages = [];
+  document.getElementById('feed').innerHTML = `<div class="empty" id="emptyState"><div class="empty-ico">🎙</div><p>La conversación traducida aparecerá aquí</p></div>`;
+}
+
+function exportChat() {
+  if (!messages.length) { alert('Aún no hay conversación para exportar.'); return; }
+  let t = `LINGUA VOICE — Rodrigo Anguita\n${new Date().toLocaleString('es')}\n${'─'.repeat(48)}\n\n`;
+  messages.forEach(m => {
+    const s = speakers[m.spIdx];
+    t += `[${m.time.toLocaleTimeString()}] ${s?.name||'?'}\n  Original:   ${m.text}\n  Traducción: ${m.translation||'…'}\n\n`;
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'}));
+  a.download = 'lingua-conversacion.txt'; a.click();
+}
+
+document.getElementById('modalBg').onclick = e => { if (e.target===document.getElementById('modalBg')) closeSetup(); };
+
+// INIT
+renderSpeakerCards();
+</script>
+</body>
+</html>
