@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>Lingua Voice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c27;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f0f5;
+    --muted: rgba(240,240,245,0.45);
+    --a-accent: #4ECDC4;
+    --a-glow: rgba(78,205,196,0.25);
+    --b-accent: #FF6B9D;
+    --b-glow: rgba(255,107,157,0.25);
+    --active-glow: rgba(78,205,196,0.15);
+    --radius: 20px;
+    --font-display: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* SETUP SCREEN */
+  #setup-screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+    z-index: 100;
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  #setup-screen.hidden { opacity: 0; transform: scale(0.96); pointer-events: none; }
+
+  .setup-logo {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--a-accent), var(--b-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .setup-tagline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 40px;
+    letter-spacing: 0.02em;
+  }
+  .setup-card {
+    width: 100%; max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .setup-section-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .lang-row {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .lang-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .lang-dot.a { background: var(--a-accent); box-shadow: 0 0 8px var(--a-accent); }
+  .lang-dot.b { background: var(--b-accent); box-shadow: 0 0 8px var(--b-accent); }
+  .lang-label { font-size: 0.78rem; color: var(--muted); width: 52px; flex-shrink: 0; }
+
+  select, input[type=text] {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    outline: none;
+    appearance: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, input:focus { border-color: var(--a-accent); }
+
+  .api-row { display: flex; align-items: center; gap: 10px; }
+  .api-key-input { flex: 1; letter-spacing: 0.05em; }
+  .save-key-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .save-key-btn:hover { background: var(--border); color: var(--text); }
+  .save-key-btn.saved { color: var(--a-accent); }
+
+  .start-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--a-accent), #3ab5b0);
+    color: #0a0a0f;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px var(--a-glow);
+  }
+  .start-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 28px var(--a-glow); }
+  .start-btn:active { transform: scale(0.98); }
+
+  /* MAIN APP */
+  #app {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s 0.1s;
+  }
+  #app.visible { opacity: 1; pointer-events: all; }
+
+  /* TWO PANELS */
+  .panel {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px 24px;
+    position: relative;
+    transition: background 0.4s;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .panel.b { transform: rotate(180deg); }
+
+  .panel-glow {
+    position: absolute; inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s;
+    pointer-events: none;
+  }
+  .panel.a .panel-glow { background: radial-gradient(ellipse at 50% 80%, var(--a-glow) 0%, transparent 70%); }
+  .panel.b .panel-glow { background: radial-gradient(ellipse at 50% 80%, var(--b-glow) 0%, transparent 70%); }
+  .panel.listening .panel-glow { opacity: 1; }
+
+  .panel-border {
+    position: absolute; left: 0; right: 0;
+    height: 2px; bottom: 0;
+    opacity: 0.3;
+    transition: opacity 0.3s, height 0.3s;
+  }
+  .panel.a .panel-border { background: var(--a-accent); }
+  .panel.b .panel-border { background: var(--b-accent); }
+  .panel.listening .panel-border { opacity: 1; height: 3px; }
+
+  .speaker-name {
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    transition: color 0.3s;
+  }
+  .panel.a .speaker-name { color: var(--a-accent); }
+  .panel.b .speaker-name { color: var(--b-accent); }
+
+  /* MIC BUTTON */
+  .mic-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: all 0.25s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .panel.a .mic-btn {
+    background: rgba(78,205,196,0.12);
+    box-shadow: 0 0 0 0 var(--a-glow);
+  }
+  .panel.b .mic-btn {
+    background: rgba(255,107,157,0.12);
+    box-shadow: 0 0 0 0 var(--b-glow);
+  }
+  .panel.a .mic-btn:hover { background: rgba(78,205,196,0.2); }
+  .panel.b .mic-btn:hover { background: rgba(255,107,157,0.2); }
+
+  .panel.listening .mic-btn { animation: pulse-ring 1.5s ease-out infinite; }
+  .panel.a.listening .mic-btn {
+    background: rgba(78,205,196,0.25);
+    box-shadow: 0 0 0 4px rgba(78,205,196,0.2);
+  }
+  .panel.b.listening .mic-btn {
+    background: rgba(255,107,157,0.25);
+    box-shadow: 0 0 0 4px rgba(255,107,157,0.2);
+  }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 currentColor; }
+    70% { box-shadow: 0 0 0 16px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .panel.a.listening .mic-btn { --pulse-color: var(--a-accent); }
+  .panel.b.listening .mic-btn { --pulse-color: var(--b-accent); }
+
+  .mic-icon {
+    width: 28px; height: 28px;
+    transition: all 0.25s;
+  }
+  .panel.a .mic-icon { color: var(--a-accent); }
+  .panel.b .mic-icon { color: var(--b-accent); }
+
+  /* TRANSCRIPT AREA */
+  .transcript-area {
+    width: 100%; max-width: 340px;
+    min-height: 80px;
+    text-align: center;
+    margin-top: 16px;
+  }
+  .original-text {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.5;
+    min-height: 20px;
+    transition: opacity 0.3s;
+  }
+  .translated-text {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+    margin-top: 8px;
+    min-height: 28px;
+  }
+
+  /* INTERIM (live transcription) */
+  .interim-text {
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-style: italic;
+    min-height: 18px;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  /* STATUS BADGE */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    margin-top: 14px;
+    transition: all 0.3s;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+  .panel.listening .status-badge { border-color: rgba(78,205,196,0.3); }
+  .panel.a.listening .status-dot { background: var(--a-accent); animation: blink 1s infinite; }
+  .panel.b.listening .status-dot { background: var(--b-accent); animation: blink 1s infinite; }
+  .panel.translating .status-badge { opacity: 0.6; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* DIVIDER */
+  .divider {
+    position: relative;
+    height: 52px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .divider-line {
+    position: absolute; left: 0; right: 0;
+    height: 1px;
+    background: var(--border);
+  }
+  .divider-pill {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    padding: 6px 14px;
+    display: flex; align-items: center; gap: 10px;
+    z-index: 1;
+  }
+  .divider-langs {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .divider-sep { opacity: 0.4; }
+  .settings-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface2);
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+  }
+  .settings-btn:hover { background: var(--border); color: var(--text); }
+
+  /* WAVEFORM BARS */
+  .waveform {
+    display: flex; align-items: center; gap: 3px;
+    height: 24px;
+    margin: 10px auto 0;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .panel.listening .waveform { opacity: 1; }
+  .wave-bar {
+    width: 3px; border-radius: 3px;
+    background: var(--a-accent);
+    animation: wave-anim 1s ease-in-out infinite;
+  }
+  .panel.b .wave-bar { background: var(--b-accent); }
+  .wave-bar:nth-child(1) { animation-delay: 0s; }
+  .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+  .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+  .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+  .wave-bar:nth-child(6) { animation-delay: 0.2s; }
+  .wave-bar:nth-child(7) { animation-delay: 0.1s; }
+  @keyframes wave-anim {
+    0%,100% { height: 4px; }
+    50% { height: 20px; }
+  }
+
+  /* AUTO MODE TOGGLE */
+  .auto-toggle {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px;
+    padding: 7px 12px;
+    border-radius: 30px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .toggle-track {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: all 0.2s;
+  }
+  .auto-toggle.on .toggle-track { background: rgba(78,205,196,0.25); border-color: var(--a-accent); }
+  .auto-toggle.on .toggle-thumb { left: 18px; background: var(--a-accent); }
+  .toggle-label { font-size: 0.72rem; font-weight: 500; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+  .auto-toggle.on .toggle-label { color: var(--a-accent); }
+
+  /* TRANSLATING SPINNER */
+  .spin-icon {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--a-accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  .panel.b .spin-icon { border-top-color: var(--b-accent); }
+  .panel.translating .spin-icon { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* HISTORY DRAWER */
+  #history-drawer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    max-height: 55vh;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 0 0 env(safe-area-inset-bottom);
+    z-index: 50;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+    display: flex; flex-direction: column;
+  }
+  #history-drawer.open { transform: translateY(0); }
+  .drawer-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+  .drawer-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 12px;
+    flex-shrink: 0;
+  }
+  .drawer-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .drawer-close {
+    width: 28px; height: 28px;
+    border-radius: 50%; border: none;
+    background: var(--surface2);
+    color: var(--muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; line-height: 1;
+  }
+  .history-list {
+    overflow-y: auto; padding: 0 16px 16px; flex: 1;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .history-item {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 12px 14px;
+    border-left: 3px solid;
+  }
+  .history-item.a { border-color: var(--a-accent); }
+  .history-item.b { border-color: var(--b-accent); }
+  .history-speaker { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .history-item.a .history-speaker { color: var(--a-accent); }
+  .history-item.b .history-speaker { color: var(--b-accent); }
+  .history-orig { font-size: 0.78rem; color: var(--muted); margin-bottom: 2px; }
+  .history-trans { font-size: 0.9rem; color: var(--text); }
+
+  /* HISTORY BUTTON */
+  #history-btn {
+    position: absolute; bottom: 8px; right: 50%;
+    transform: translateX(50%);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 5;
+  }
+  #history-btn:hover { color: var(--text); }
+
+  /* NO KEY NOTICE */
+  .no-key-notice {
+    font-size: 0.72rem;
+    color: #ff9500;
+    text-align: center;
+    padding: 8px 16px;
+    background: rgba(255,149,0,0.08);
+    border-radius: 8px;
+    border: 1px solid rgba(255,149,0,0.2);
+  }
+
+  /* OVERLAY for settings */
+  #settings-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 80;
+    display: none; align-items: center; justify-content: center; padding: 24px;
+  }
+  #settings-overlay.open { display: flex; }
+  .settings-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%; max-width: 380px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .modal-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; }
+  .modal-close-btn {
+    margin-top: 4px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+  /* Responsive tweaks for large screens */
+  @media (min-width: 500px) {
+    .panel { padding: 28px 40px; }
+    .mic-btn { width: 84px; height: 84px; }
+    .mic-icon { width: 32px; height: 32px; }
+    .translated-text { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-logo">Lingua Voice</div>
+  <div class="setup-tagline">Real-time translation for two people</div>
+  <div class="setup-card">
+    <div>
+      <div class="setup-section-title">Languages</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px">
+        <div class="lang-row">
+          <span class="lang-dot a"></span>
+          <span class="lang-label">Person A</span>
+          <select id="lang-a">
+            <option value="es">Spanish</option>
+            <option value="en" selected>English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="zh">Chinese (Mandarin)</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="ar">Arabic</option>
+            <option value="ru">Russian</option>
+            <option value="hi">Hindi</option>
+            <option value="tr">Turkish</option>
+            <option value="nl">Dutch</option>
+            <option value="pl">Polish</option>
+          </select>
+        </div>
+        <div class="lang-row">
+          <span class="lang-dot b"></span>
+          <span class="lang-label">Person B</span>
+          <select id="lang-b">
+            <option value="es" selected>Spanish</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="zh">Chinese (Mandarin)</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="ar">Arabic</option>
+            <option value="ru">Russian</option>
+            <option value="hi">Hindi</option>
+            <option value="tr">Turkish</option>
+            <option value="nl">Dutch</option>
+            <option value="pl">Polish</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="setup-section-title">Gemini API Key</div>
+      <div class="api-row" style="margin-top:10px">
+        <input class="api-key-input" type="password" id="api-key-input" placeholder="AIza..." autocomplete="off">
+        <button class="save-key-btn" id="save-key-btn">Save</button>
+      </div>
+    </div>
+    <button class="start-btn" id="start-btn">Start Conversation →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <!-- PANEL A (top) -->
+  <div class="panel a" id="panel-a">
+    <div class="panel-glow"></div>
+    <div class="panel-border"></div>
+    <div class="speaker-name" id="name-a">PERSON A</div>
+    <button class="mic-btn" id="mic-a" aria-label="Tap to speak">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <div class="waveform" id="wave-a">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div class="transcript-area">
+      <div class="interim-text" id="interim-a"></div>
+      <div class="original-text" id="orig-a"></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
+        <div class="spin-icon" id="spin-a"></div>
+        <div class="translated-text" id="trans-a">—</div>
+      </div>
+    </div>
+    <div class="status-badge" id="status-a">
+      <div class="status-dot"></div>
+      <span id="status-text-a">Tap to speak</span>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-pill">
+      <div class="divider-langs">
+        <span id="div-lang-a">EN</span>
+        <span class="divider-sep">⇄</span>
+        <span id="div-lang-b">ES</span>
+      </div>
+      <button class="settings-btn" id="open-settings" title="Settings">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- PANEL B (bottom, rotated for person B) -->
+  <div class="panel b" id="panel-b">
+    <div class="panel-glow"></div>
+    <div class="panel-border"></div>
+    <div class="speaker-name" id="name-b">PERSON B</div>
+    <button class="mic-btn" id="mic-b" aria-label="Tap to speak">
+      <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <div class="waveform" id="wave-b">
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+      <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+    </div>
+    <div class="transcript-area">
+      <div class="interim-text" id="interim-b"></div>
+      <div class="original-text" id="orig-b"></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
+        <div class="spin-icon" id="spin-b"></div>
+        <div class="translated-text" id="trans-b">—</div>
+      </div>
+    </div>
+    <div class="status-badge" id="status-b">
+      <div class="status-dot"></div>
+      <span id="status-text-b">Tap to speak</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- HISTORY DRAWER -->
+<div id="history-drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <div class="drawer-title">Conversation History</div>
+    <button class="drawer-close" id="close-history">✕</button>
+  </div>
+  <div class="history-list" id="history-list">
+    <div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px 0">No messages yet</div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay">
+  <div class="settings-modal">
+    <div class="modal-title">Settings</div>
+    <div>
+      <div class="setup-section-title">Language A</div>
+      <select id="settings-lang-a" style="width:100%;margin-top:8px">
+        <option value="en">English</option><option value="es">Spanish</option><option value="fr">French</option>
+        <option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option>
+        <option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option>
+        <option value="ar">Arabic</option><option value="ru">Russian</option><option value="hi">Hindi</option>
+        <option value="tr">Turkish</option>
+      </select>
+    </div>
+    <div>
+      <div class="setup-section-title">Language B</div>
+      <select id="settings-lang-b" style="width:100%;margin-top:8px">
+        <option value="es">Spanish</option><option value="en">English</option><option value="fr">French</option>
+        <option value="de">German</option><option value="it">Italian</option><option value="pt">Portuguese</option>
+        <option value="zh">Chinese</option><option value="ja">Japanese</option><option value="ko">Korean</option>
+        <option value="ar">Arabic</option><option value="ru">Russian</option><option value="hi">Hindi</option>
+        <option value="tr">Turkish</option>
+      </select>
+    </div>
+    <div>
+      <div class="setup-section-title">Gemini API Key</div>
+      <div class="api-row" style="margin-top:8px">
+        <input class="api-key-input" type="password" id="settings-api-key" placeholder="AIza..." style="flex:1">
+        <button class="save-key-btn" id="settings-save-key">Save</button>
+      </div>
+    </div>
+    <button class="modal-close-btn" id="close-settings">Done</button>
+  </div>
+</div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────────
+const state = {
+  langA: 'en',
+  langB: 'es',
+  apiKey: '',
+  activePanel: null,   // 'a' | 'b' | null
+  recognizing: false,
+  recognition: null,
+  history: [],
+  isSpeaking: false,
+  synth: window.speechSynthesis,
+  ttsQueue: []
+};
+
+const LANG_NAMES = {
+  en:'English', es:'Spanish', fr:'French', de:'German', it:'Italian',
+  pt:'Portuguese', zh:'Chinese', ja:'Japanese', ko:'Korean', ar:'Arabic',
+  ru:'Russian', hi:'Hindi', tr:'Turkish', nl:'Dutch', pl:'Polish'
+};
+const LANG_CODES_BCP = {
+  en:'en-US', es:'es-ES', fr:'fr-FR', de:'de-DE', it:'it-IT',
+  pt:'pt-BR', zh:'zh-CN', ja:'ja-JP', ko:'ko-KR', ar:'ar-SA',
+  ru:'ru-RU', hi:'hi-IN', tr:'tr-TR', nl:'nl-NL', pl:'pl-PL'
+};
+
+// ─── DOM ────────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const setupScreen = $('setup-screen');
+const app = $('app');
+const panelA = $('panel-a'), panelB = $('panel-b');
+const micA = $('mic-a'), micB = $('mic-b');
+const interimA = $('interim-a'), interimB = $('interim-b');
+const origA = $('orig-a'), origB = $('orig-b');
+const transA = $('trans-a'), transB = $('trans-b');
+const statusTextA = $('status-text-a'), statusTextB = $('status-text-b');
+const historyDrawer = $('history-drawer');
+const historyList = $('history-list');
+const divLangA = $('div-lang-a'), divLangB = $('div-lang-b');
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem('ra_gemini') || localStorage.getItem('lingua_api_key');
+  if (saved) {
+    state.apiKey = saved;
+    $('api-key-input').value = saved;
+    $('settings-api-key').value = saved;
+    $('save-key-btn').textContent = 'Saved ✓';
+    $('save-key-btn').classList.add('saved');
+  }
+
+  $('save-key-btn').addEventListener('click', () => {
+    const v = $('api-key-input').value.trim();
+    if (v) { state.apiKey = v; localStorage.setItem('ra_gemini', v); $('save-key-btn').textContent = 'Saved ✓'; $('save-key-btn').classList.add('saved'); }
+  });
+  $('settings-save-key').addEventListener('click', () => {
+    const v = $('settings-api-key').value.trim();
+    if (v) { state.apiKey = v; localStorage.setItem('ra_gemini', v); $('settings-save-key').textContent = 'Saved ✓'; $('settings-save-key').classList.add('saved'); }
+  });
+
+  $('start-btn').addEventListener('click', startApp);
+  micA.addEventListener('click', () => toggleMic('a'));
+  micB.addEventListener('click', () => toggleMic('b'));
+
+  $('open-settings').addEventListener('click', () => { $('settings-overlay').classList.add('open'); syncSettingsSelects(); });
+  $('close-settings').addEventListener('click', () => {
+    state.langA = $('settings-lang-a').value;
+    state.langB = $('settings-lang-b').value;
+    updateDividerLangs();
+    $('settings-overlay').classList.remove('open');
+  });
+
+  $('close-history').addEventListener('click', () => historyDrawer.classList.remove('open'));
+  document.querySelector('.divider-langs').addEventListener('click', () => historyDrawer.classList.toggle('open'));
+}
+
+function startApp() {
+  state.langA = $('lang-a').value;
+  state.langB = $('lang-b').value;
+  setupScreen.classList.add('hidden');
+  app.classList.add('visible');
+  updateDividerLangs();
+}
+
+function updateDividerLangs() {
+  divLangA.textContent = state.langA.toUpperCase();
+  divLangB.textContent = state.langB.toUpperCase();
+  $('settings-lang-a').value = state.langA;
+  $('settings-lang-b').value = state.langB;
+}
+
+function syncSettingsSelects() {
+  $('settings-lang-a').value = state.langA;
+  $('settings-lang-b').value = state.langB;
+  $('settings-api-key').value = state.apiKey;
+}
+
+// ─── MIC TOGGLE ─────────────────────────────────────────────────────────────
+function toggleMic(panel) {
+  if (state.isSpeaking) { state.synth.cancel(); state.isSpeaking = false; }
+
+  if (state.activePanel === panel) {
+    stopRecognition();
+    return;
+  }
+  if (state.activePanel && state.activePanel !== panel) {
+    stopRecognition(false);
+  }
+  startRecognition(panel);
+}
+
+function setStatus(panel, text, mode) {
+  const el = panel === 'a' ? statusTextA : statusTextB;
+  const p = panel === 'a' ? panelA : panelB;
+  el.textContent = text;
+  p.classList.remove('listening', 'translating');
+  if (mode) p.classList.add(mode);
+}
+
+// ─── SPEECH RECOGNITION ─────────────────────────────────────────────────────
+function startRecognition(panel) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Speech recognition not supported. Use Chrome or Edge.');
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SpeechRecognition();
+  const lang = panel === 'a' ? state.langA : state.langB;
+  rec.lang = LANG_CODES_BCP[lang] || lang;
+  rec.interimResults = true;
+  rec.continuous = true;
+  rec.maxAlternatives = 1;
+
+  state.recognition = rec;
+  state.activePanel = panel;
+  state.recognizing = true;
+
+  const interimEl = panel === 'a' ? interimA : interimB;
+  const origEl = panel === 'a' ? origA : origB;
+  const transEl = panel === 'a' ? transA : transB;
+
+  setStatus(panel, 'Listening…', 'listening');
+
+  let finalBuffer = '';
+  let silenceTimer = null;
+
+  rec.onresult = e => {
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+
+    interimEl.textContent = interim;
+
+    if (final) {
+      finalBuffer += ' ' + final;
+      interimEl.textContent = '';
+      origEl.textContent = finalBuffer.trim();
+
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        if (finalBuffer.trim()) {
+          const text = finalBuffer.trim();
+          finalBuffer = '';
+          translateAndSpeak(panel, text, lang);
+        }
+      }, 900);
+    }
+  };
+
+  rec.onerror = e => {
+    if (e.error === 'no-speech') return;
+    setStatus(panel, 'Tap to speak', null);
+    state.activePanel = null; state.recognizing = false;
+  };
+
+  rec.onend = () => {
+    if (state.activePanel === panel && state.recognizing) {
+      try { rec.start(); } catch(_) {}
+    }
+  };
+
+  rec.start();
+}
+
+function stopRecognition(updateUI = true) {
+  const panel = state.activePanel;
+  state.recognizing = false;
+  state.activePanel = null;
+  if (state.recognition) { try { state.recognition.stop(); } catch(_) {} state.recognition = null; }
+  if (updateUI && panel) {
+    setStatus(panel, 'Tap to speak', null);
+    const interimEl = panel === 'a' ? interimA : interimB;
+    interimEl.textContent = '';
+  }
+}
+
+// ─── TRANSLATE ───────────────────────────────────────────────────────────────
+async function translateAndSpeak(panel, text, fromLang) {
+  const toLang = panel === 'a' ? state.langB : state.langA;
+  const targetPanel = panel === 'a' ? 'b' : 'a';
+  const transEl = panel === 'a' ? transA : transB;
+
+  setStatus(panel, 'Translating…', 'translating');
+  transEl.textContent = '…';
+
+  let translated = null;
+
+  // Try Gemini first
+  if (state.apiKey) {
+    try {
+      translated = await translateGemini(text, LANG_NAMES[fromLang] || fromLang, LANG_NAMES[toLang] || toLang);
+    } catch(e) { console.warn('Gemini failed:', e); }
+  }
+
+  // Fallback: MyMemory
+  if (!translated) {
+    try { translated = await translateMyMemory(text, fromLang, toLang); } catch(e) {}
+  }
+
+  if (!translated) translated = '[Translation failed]';
+
+  transEl.textContent = translated;
+  setStatus(panel, 'Done', null);
+  setTimeout(() => setStatus(panel, 'Tap to speak', null), 1500);
+
+  // Show translation on TARGET panel too
+  const targetTransEl = targetPanel === 'a' ? transA : transB;
+  const targetOrigEl = targetPanel === 'a' ? origA : origB;
+  targetTransEl.textContent = text;
+  targetOrigEl.textContent = translated;
+
+  addToHistory(panel, text, translated);
+  speakText(translated, toLang);
+}
+
+async function translateGemini(text, fromLang, toLang) {
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.apiKey}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      contents: [{parts: [{text:
+        `Translate the following text from ${fromLang} to ${toLang}. Return ONLY the translation, nothing else, no explanations.\n\nText: ${text}`
+      }]}],
+      generationConfig: {temperature: 0.1, maxOutputTokens: 500}
+    })
+  });
+  if (!resp.ok) throw new Error('Gemini error');
+  const data = await resp.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+}
+
+async function translateMyMemory(text, from, to) {
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  if (data.responseStatus === 200) return data.responseData.translatedText;
+  throw new Error('MyMemory error');
+}
+
+// ─── TTS ─────────────────────────────────────────────────────────────────────
+function speakText(text, lang) {
+  if (!state.synth) return;
+  state.synth.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = LANG_CODES_BCP[lang] || lang;
+  utt.rate = 1.0; utt.pitch = 1.0; utt.volume = 1.0;
+  utt.onstart = () => { state.isSpeaking = true; };
+  utt.onend = () => { state.isSpeaking = false; };
+  utt.onerror = () => { state.isSpeaking = false; };
+  state.synth.speak(utt);
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────────
+function addToHistory(panel, original, translated) {
+  state.history.push({panel, original, translated, ts: Date.now()});
+  renderHistory();
+}
+
+function renderHistory() {
+  if (!state.history.length) return;
+  historyList.innerHTML = '';
+  [...state.history].reverse().forEach(item => {
+    const div = document.createElement('div');
+    div.className = `history-item ${item.panel}`;
+    const speakerLabel = item.panel === 'a' ? 'Person A' : 'Person B';
+    div.innerHTML = `<div class="history-speaker">${speakerLabel}</div>
+      <div class="history-orig">${escHtml(item.original)}</div>
+      <div class="history-trans">${escHtml(item.translated)}</div>`;
+    historyList.appendChild(div);
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── START ───────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
