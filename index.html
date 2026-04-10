@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lingua Voice v4 · Simultaneous</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05050a;--s1:rgba(255,255,255,.032);--bdr:rgba(255,255,255,.07);
+  --gold:#c9a96e;--blue:#5b9bd5;--green:#4ecb71;--red:#e05c5c;--orange:#e0904a;
+  --txt:#ede5d6;--dim:#524f4a;--fh:'Syne',sans-serif;--fb:'Crimson Pro',serif;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb);font-size:18px;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 65% 50% at 8% 12%,rgba(201,169,110,.08) 0%,transparent 65%),
+    radial-gradient(ellipse 55% 60% at 92% 88%,rgba(91,155,213,.07) 0%,transparent 65%);
+}
+.wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;max-width:1200px;margin:0 auto;padding:0 20px}
+
+/* HEADER */
+header{text-align:center;padding:30px 0 20px}
+h1{font-family:var(--fh);font-size:clamp(48px,8vw,80px);font-weight:800;letter-spacing:-.04em;line-height:1;background:linear-gradient(140deg,#8a5a18 0%,#d4a050 25%,#fffae8 52%,#c9a96e 75%,#6a4010 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:5px}
+.sub{font-size:22px;color:var(--gold);font-style:italic}
+.version-badge{display:inline-block;font-family:var(--fh);font-size:13px;font-weight:700;letter-spacing:.12em;padding:4px 14px;border-radius:20px;border:1.5px solid rgba(78,203,113,.4);color:var(--green);background:rgba(78,203,113,.08);margin-top:8px}
+
+/* MODE SELECTOR */
+.mode-panel{background:rgba(255,255,255,.025);border:2px solid var(--bdr);border-radius:24px;padding:20px 25px;margin-bottom:20px}
+.mode-title{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);margin-bottom:14px;text-align:center}
+.mode-grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.mode-btn{font-family:var(--fh);font-size:16px;font-weight:700;padding:12px 22px;border-radius:50px;cursor:pointer;border:2px solid var(--bdr);background:transparent;color:var(--dim);transition:all .2s;display:flex;align-items:center;gap:8px}
+.mode-btn:hover{border-color:rgba(255,255,255,.25);color:var(--txt)}
+.mode-btn.active{border-color:var(--gold);color:var(--gold);background:rgba(201,169,110,.08)}
+.mode-desc{font-size:15px;color:var(--dim);text-align:center;margin-top:12px;font-style:italic;min-height:20px}
+
+/* STATUS BANNER */
+.status-banner{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.025);border:2px solid var(--bdr);border-radius:50px;padding:14px 24px;margin-bottom:20px;flex-wrap:wrap}
+.sdot{width:14px;height:14px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:all .3s}
+.sdot.on{background:var(--green);box-shadow:0 0 12px var(--green);animation:lp 1s infinite}
+.sdot.busy{background:var(--gold);box-shadow:0 0 12px var(--gold);animation:lp .45s infinite}
+.sdot.speaking{background:var(--blue);box-shadow:0 0 12px var(--blue);animation:lp .3s infinite}
+@keyframes lp{0%,100%{opacity:1}50%{opacity:.35}}
+.stxt{flex:1;font-size:20px;color:var(--dim);font-style:italic;min-width:150px}
+.stxt.on{color:var(--txt)}
+.lat-badge{font-family:var(--fh);font-size:14px;font-weight:700;padding:4px 14px;border-radius:30px;background:rgba(255,255,255,.05);color:var(--dim);display:flex;align-items:center;gap:6px}
+.lat-badge.fast{color:var(--green);background:rgba(78,203,113,.1)}
+.lat-badge.med{color:var(--gold);background:rgba(201,169,110,.1)}
+.lat-badge.slow{color:var(--red);background:rgba(224,92,92,.1)}
+.mode-indicator{font-family:var(--fh);font-size:14px;font-weight:700;padding:4px 14px;border-radius:30px;background:rgba(201,169,110,.08);color:var(--gold);border:1.5px solid rgba(201,169,110,.3)}
+
+/* MAIN BUTTON */
+.main-control{display:flex;justify-content:center;margin-bottom:24px}
+.btn-main{font-family:var(--fh);font-size:32px;font-weight:800;padding:22px 50px;border-radius:80px;cursor:pointer;border:none;display:flex;align-items:center;gap:16px;min-width:360px;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:all .2s;justify-content:center}
+.btn-main.listening{background:linear-gradient(135deg,var(--red),#ff7070);color:#fff;animation:pulse 1.4s ease-in-out infinite}
+.btn-main.idle{background:linear-gradient(135deg,var(--gold),#ddb860);color:#120d00}
+.btn-main.idle:hover{transform:scale(1.02);box-shadow:0 8px 28px rgba(201,169,110,.6)}
+@keyframes pulse{0%,100%{box-shadow:0 4px 26px rgba(224,92,92,.65)}50%{box-shadow:0 4px 36px rgba(224,92,92,.9)}}
+
+/* CHANNELS */
+.channels-panel{background:var(--s1);border:2px solid var(--bdr);border-radius:30px;padding:25px;margin-bottom:24px}
+.channels-title{font-family:var(--fh);font-size:24px;font-weight:700;color:var(--gold);margin-bottom:18px;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px}
+.channels-grid{display:flex;gap:20px;flex-wrap:wrap}
+.channel-card{flex:1;min-width:280px;background:rgba(255,255,255,.02);border:2px solid var(--bdr);border-radius:20px;padding:20px;position:relative}
+.channel-card.left{border-color:rgba(201,169,110,.5);background:rgba(201,169,110,.05)}
+.channel-card.right{border-color:rgba(91,155,213,.5);background:rgba(91,155,213,.05)}
+.channel-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.channel-icon{font-size:34px}
+.channel-info h3{font-family:var(--fh);font-size:26px;font-weight:700;color:var(--txt)}
+.channel-info p{font-size:16px;color:var(--dim)}
+.channel-select{width:100%;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.09);border-radius:40px;padding:11px 18px;color:var(--txt);font-family:var(--fh);font-size:18px;outline:none;cursor:pointer;margin-bottom:14px}
+.channel-select option{background:#0d0d16}
+.volume-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.volume-label{font-size:16px;color:var(--dim);font-family:var(--fh);min-width:40px}
+.volume-slider{flex:1;height:7px;-webkit-appearance:none;background:rgba(255,255,255,.1);border-radius:10px;outline:none}
+.volume-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--c,var(--gold));cursor:pointer}
+.volume-value{font-size:16px;color:var(--dim);font-family:var(--fh);min-width:42px;text-align:right}
+.test-button{width:100%;background:transparent;border:2px solid var(--bdr);border-radius:40px;padding:11px;font-family:var(--fh);font-size:18px;font-weight:700;color:var(--dim);cursor:pointer;transition:all .2s;margin-top:4px}
+.test-button:hover{border-color:var(--c,var(--gold));color:var(--c,var(--gold))}
+.channel-active-badge{position:absolute;top:14px;right:14px;width:10px;height:10px;border-radius:50%;background:var(--dim);transition:all .3s}
+.channel-active-badge.active{background:var(--green);box-shadow:0 0 8px var(--green)}
+
+/* SPEAKER CARDS */
+.spcards{display:flex;gap:18px;margin-bottom:24px;flex-wrap:wrap}
+.spc{flex:1;min-width:240px;background:var(--s1);border:2px solid var(--bdr);border-radius:24px;padding:18px 22px;transition:all .22s}
+.spc.active{border-color:var(--c);border-width:3px;background:rgba(0,0,0,.2)}
+.spc-top{display:flex;align-items:center;gap:14px}
+.spc-av{width:64px;height:64px;border-radius:50%;border:3px solid var(--c);color:var(--c);background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:30px;font-weight:800}
+.spc-nm{font-family:var(--fh);font-size:26px;font-weight:700;color:var(--txt)}
+.spc-lg{font-size:20px;color:var(--dim)}
+.spc-live{font-size:15px;color:var(--gold);margin-top:4px;font-style:italic;min-height:20px;opacity:0;transition:opacity .2s}
+.spc.speaking .spc-live{opacity:1}
+.spc-wave{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:14px}
+.wb{width:5px;border-radius:4px;background:var(--c);opacity:.18;transition:height .08s,opacity .15s}
+.spc.speaking .wb{opacity:1}
+
+/* LIVE INTERIM */
+.interim-bar{background:rgba(201,169,110,.07);border:1.5px solid rgba(201,169,110,.2);border-radius:16px;padding:12px 20px;margin-bottom:18px;display:none;gap:14px;align-items:flex-start}
+.interim-bar.visible{display:flex}
+.interim-speaker{font-family:var(--fh);font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);min-width:90px;padding-top:2px}
+.interim-text{font-size:20px;color:rgba(255,255,255,.6);font-style:italic;flex:1}
+.interim-text em{color:rgba(255,255,255,.9);font-style:normal}
+.streaming-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;animation:dot .55s infinite;margin-left:6px}
+@keyframes dot{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+
+/* CONVERSATION */
+.feed-wrap{flex:1;padding-bottom:20px}
+.feed-hd{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.feed-ttl{font-family:var(--fh);font-size:20px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold)}
+.feed-ln{flex:1;height:2px;background:rgba(201,169,110,.3)}
+.ctrls-bar{display:flex;gap:10px;align-items:center}
+.feed-clr{font-family:var(--fh);font-size:16px;color:var(--dim);cursor:pointer;background:none;border:2px solid var(--bdr);border-radius:30px;padding:6px 16px;transition:all .2s}
+.feed-clr:hover{color:var(--red);border-color:var(--red)}
+.tp-toggle{font-family:var(--fh);font-size:16px;color:var(--dim);cursor:pointer;background:none;border:2px solid var(--bdr);border-radius:30px;padding:6px 16px;transition:all .2s}
+.tp-toggle:hover,.tp-toggle.active{color:var(--gold);border-color:var(--gold)}
+.feed{display:flex;flex-direction:column;gap:18px}
+.msg{display:flex;gap:18px;align-items:flex-start}
+.mav{width:54px;height:54px;border-radius:50%;border:2px solid var(--c);color:var(--c);background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:26px;font-weight:800;flex-shrink:0}
+.mbody{flex:1}
+.mmeta{display:flex;align-items:baseline;gap:12px;margin-bottom:7px;flex-wrap:wrap}
+.mnm{font-family:var(--fh);font-size:22px;font-weight:700}
+.mlb{font-size:16px;font-family:var(--fh);padding:2px 10px;border-radius:20px;background:rgba(255,255,255,.05);color:var(--dim)}
+.mtm{font-size:15px;color:var(--dim)}
+.mlat{font-size:13px;font-family:var(--fh);padding:2px 8px;border-radius:20px}
+.mlat.fast{background:rgba(78,203,113,.1);color:var(--green)}
+.mlat.med{background:rgba(201,169,110,.1);color:var(--gold)}
+.mlat.slow{background:rgba(224,92,92,.1);color:var(--red)}
+.morig{font-size:24px;line-height:1.5;color:var(--txt);margin-bottom:5px}
+.mtr{font-size:22px;line-height:1.4;color:#b0a898;font-style:italic;padding-left:14px;border-left:3px solid var(--c);min-height:28px;transition:color .3s}
+.mtr.streaming{color:#c0b8a8}
+.mtr.done{color:#d0c8b8}
+.mspin{font-size:20px;color:var(--gold);display:flex;align-items:center;gap:7px}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mspk{margin-left:10px;background:transparent;border:1.5px solid rgba(255,255,255,.1);border-radius:30px;padding:4px 13px;font-size:16px;cursor:pointer;transition:all .2s}
+.mspk:hover{border-color:var(--c);color:var(--c)}
+.empty{text-align:center;padding:50px 0}
+.empty-i{font-size:58px;opacity:.15;margin-bottom:18px}
+.empty p{font-size:24px;color:var(--dim);font-style:italic}
+
+/* TELEPROMPTER */
+.tp-wrap{position:fixed;bottom:0;left:0;right:0;z-index:500;pointer-events:none;transform:translateY(100%);transition:transform .4s}
+.tp-wrap.visible{transform:translateY(0)}
+.tp-box{background:rgba(0,0,0,.93);backdrop-filter:blur(20px);border-top:4px solid var(--gold);padding:22px 40px 28px;pointer-events:all}
+.tp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.tp-title{font-family:var(--fh);font-size:22px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.tp-controls{display:flex;gap:12px;align-items:center}
+.tp-size-btn{background:transparent;border:2px solid rgba(255,255,255,.15);border-radius:12px;padding:4px 16px;font-size:26px;cursor:pointer}
+.tp-size-btn:hover{border-color:var(--gold);color:var(--gold)}
+.tp-close{background:transparent;border:none;color:var(--dim);font-size:28px;cursor:pointer;padding:0 8px}
+.tp-close:hover{color:var(--red)}
+.tp-content{display:flex;flex-direction:column;gap:12px}
+.tp-line{display:flex;align-items:baseline;gap:18px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.tp-speaker{font-family:var(--fh);font-size:22px;font-weight:700;min-width:130px}
+.tp-original{color:rgba(255,255,255,.5);font-size:var(--tpsz,28px);font-style:italic;flex:1}
+.tp-arrow{color:var(--gold);font-size:24px}
+.tp-translated{color:#fff;font-size:var(--tpsz,28px);flex:1.5}
+
+/* SETTINGS */
+.settings-section{margin-top:28px;padding:20px 0;border-top:2px solid rgba(255,255,255,.08)}
+.settings-title{font-family:var(--fh);font-size:20px;color:var(--dim);margin-bottom:14px;text-align:center;letter-spacing:.1em}
+.keybar{background:var(--s1);border:2px solid rgba(201,169,110,.22);border-radius:60px;padding:18px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;max-width:820px;margin:0 auto}
+.keybar-info{flex:1;min-width:190px}
+.keybar-info strong{font-family:var(--fh);font-size:18px;font-weight:700;color:var(--gold);display:block;margin-bottom:4px}
+.keybar-info span{font-size:16px;color:var(--dim)}
+.keyrow{display:flex;gap:10px;align-items:center;flex:2;min-width:280px}
+.keyinput{flex:1;background:rgba(0,0,0,.45);border:2px solid rgba(201,169,110,.28);border-radius:40px;padding:11px 20px;color:var(--txt);font-family:var(--fh);font-size:18px;outline:none}
+.keyinput:focus{border-color:var(--gold)}
+.keybtn{background:linear-gradient(135deg,var(--gold),#ddb860);color:#120d00;border:none;border-radius:40px;padding:11px 22px;font-family:var(--fh);font-size:18px;font-weight:700;cursor:pointer}
+.kst{font-size:16px;padding:4px 14px;border-radius:40px;display:none}
+.kst.ok{background:rgba(78,203,113,.14);color:var(--green);border:2px solid rgba(78,203,113,.28);display:inline-block}
+.kst.err{background:rgba(224,92,92,.12);color:var(--red);border:2px solid rgba(224,92,92,.25);display:inline-block}
+
+/* TTS MODE INDICATOR */
+.tts-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--fh);font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px;margin-top:8px;border:1.5px solid;transition:all .3s}
+.tts-badge.gemini{color:var(--green);border-color:rgba(78,203,113,.4);background:rgba(78,203,113,.08)}
+.tts-badge.google{color:var(--blue);border-color:rgba(91,155,213,.4);background:rgba(91,155,213,.08)}
+.tts-badge.native{color:var(--dim);border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
+
+/* DUPLEX INDICATOR */
+.duplex-badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--fh);font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1.5px solid rgba(78,203,113,.3);color:var(--green);background:rgba(78,203,113,.08)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<header>
+  <h1>Lingua Voice</h1>
+  <div class="sub">para Rodrigo · Traducción Simultánea</div>
+  <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+    <span class="version-badge">v4 · Full Duplex</span>
+    <span class="duplex-badge" id="duplexBadge">⬤ FULL DUPLEX ON</span>
+    <span class="tts-badge native" id="ttsBadge">🔊 TTS: Nativo</span>
+  </div>
+</header>
+
+<!-- MODE SELECTOR -->
+<div class="mode-panel">
+  <div class="mode-title">⚙️ Modo de operación</div>
+  <div class="mode-grid">
+    <button class="mode-btn active" id="modeStereoBt" onclick="setMode('stereo')">🎧 Estéreo (1 dispositivo)</button>
+    <button class="mode-btn" id="modeDualBt" onclick="setMode('dual')">📱📱 Dos dispositivos</button>
+    <button class="mode-btn" id="modeFallbackBt" onclick="setMode('fallback')">🔊 Altavoz (fallback)</button>
+  </div>
+  <div class="mode-desc" id="modeDesc">Canal izq → traducción ES→EN · Canal der → traducción EN→ES · Usa audífonos estéreo</div>
+</div>
+
+<!-- STATUS BANNER -->
+<div class="status-banner">
+  <div class="sdot" id="sdot"></div>
+  <div class="stxt" id="stxt">Esperando... presiona ESCUCHAR</div>
+  <div class="lat-badge" id="latBadge">⏱ — ms</div>
+  <div class="mode-indicator" id="modeInd">ESTÉREO</div>
+</div>
+
+<!-- MAIN BUTTON -->
+<div class="main-control">
+  <button class="btn-main idle" id="mainBtn" onclick="toggleRec()">
+    <span>🎤</span>
+    <span id="mainLbl">ESCUCHAR</span>
+    <span>🔊</span>
+  </button>
+</div>
+
+<!-- CHANNELS -->
+<div class="channels-panel">
+  <div class="channels-title">🎧 CANALES DE AUDIO</div>
+  <div class="channels-grid">
+    <div class="channel-card left" style="--c:var(--gold)">
+      <div class="channel-active-badge" id="leftActiveBadge"></div>
+      <div class="channel-header">
+        <span class="channel-icon">👈🇪🇸</span>
+        <div class="channel-info">
+          <h3>Canal Izquierdo</h3>
+          <p>Habla español · Escucha inglés</p>
+        </div>
+      </div>
+      <select class="channel-select" id="leftSelect" onchange="assignChannel('left',this.value)">
+        <option value="">— Dispositivo izquierdo —</option>
+      </select>
+      <div class="volume-row">
+        <span class="volume-label">Vol</span>
+        <input type="range" class="volume-slider" id="leftVol" min="0" max="1" step="0.05" value="0.9" style="--c:var(--gold)" oninput="setVol('left',this.value)">
+        <span class="volume-value" id="leftVolVal">90%</span>
+      </div>
+      <button class="test-button" style="--c:var(--gold)" onclick="testChannel('left')">🔊 Probar canal izquierdo</button>
+    </div>
+    <div class="channel-card right" style="--c:var(--blue)">
+      <div class="channel-active-badge" id="rightActiveBadge"></div>
+      <div class="channel-header">
+        <span class="channel-icon">👉🇺🇸</span>
+        <div class="channel-info">
+          <h3>Canal Derecho</h3>
+          <p>Habla inglés · Escucha español</p>
+        </div>
+      </div>
+      <select class="channel-select" id="rightSelect" onchange="assignChannel('right',this.value)">
+        <option value="">— Dispositivo derecho —</option>
+      </select>
+      <div class="volume-row">
+        <span class="volume-label">Vol</span>
+        <input type="range" class="volume-slider" id="rightVol" min="0" max="1" step="0.05" value="0.9" style="--c:var(--blue)" oninput="setVol('right',this.value)">
+        <span class="volume-value" id="rightVolVal">90%</span>
+      </div>
+      <button class="test-button" style="--c:var(--blue)" onclick="testChannel('right')">🔊 Probar canal derecho</button>
+    </div>
+  </div>
+  <p id="devInfo" style="text-align:center;margin-top:16px;color:var(--dim);font-size:15px">Detectando dispositivos...</p>
+</div>
+
+<!-- SPEAKER CARDS -->
+<div class="spcards" id="spcards"></div>
+
+<!-- LIVE INTERIM -->
+<div class="interim-bar" id="interimBar">
+  <span class="interim-speaker" id="interimSpk">🇪🇸 ES</span>
+  <span class="interim-text" id="interimTxt"><span class="streaming-dot"></span></span>
+</div>
+
+<!-- CONVERSATION -->
+<div class="feed-wrap">
+  <div class="feed-hd">
+    <span class="feed-ttl">CONVERSACIÓN</span>
+    <div class="feed-ln"></div>
+    <div class="ctrls-bar">
+      <button class="tp-toggle" id="tpBtn" onclick="toggleTp()">📺 Subtítulos</button>
+      <button class="feed-clr" onclick="clearFeed()">🗑 Limpiar</button>
+    </div>
+  </div>
+  <div class="feed" id="feed">
+    <div class="empty" id="emptyState">
+      <div class="empty-i">🎙</div>
+      <p>La conversación aparecerá aquí</p>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="settings-section">
+  <div class="settings-title">⚙️ CONFIGURACIÓN · API KEY</div>
+  <div class="keybar">
+    <div class="keybar-info">
+      <strong>Clave API Google Gemini</strong>
+      <span>Traduce + genera voz de alta calidad (estéreo real)</span>
+    </div>
+    <div class="keyrow">
+      <input type="password" class="keyinput" id="keyInput" placeholder="AIzaSy..." autocomplete="off"/>
+      <button class="keybtn" onclick="saveKey()">Guardar</button>
+      <span class="kst" id="kst"></span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- TELEPROMPTER -->
+<div class="tp-wrap" id="tpWrap">
+  <div class="tp-box">
+    <div class="tp-header">
+      <span class="tp-title">⚡ SUBTÍTULOS EN VIVO</span>
+      <div class="tp-controls">
+        <button class="tp-size-btn" onclick="tpSize(-2)">A−</button>
+        <button class="tp-size-btn" onclick="tpSize(+2)">A+</button>
+        <button class="tp-close" onclick="toggleTp()">✕</button>
+      </div>
+    </div>
+    <div class="tp-content" id="tpContent">
+      <div style="font-size:26px;color:var(--dim);text-align:center;padding:14px 0">Subtítulos aparecerán aquí...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// LINGUA VOICE v4 — FULL DUPLEX SIMULTANEOUS TRANSLATOR
+// Architecture: WebSpeech (full-duplex) + Gemini Streaming
+//               + WebAudio StereoPanner + setSinkId routing
+// =========================================================
+
+// ── STATE ──────────────────────────────────────────────
+let apiKey = localStorage.getItem('ra_gemini') || '';
+let currentMode = 'stereo'; // stereo | dual | fallback
+let isRec = false;
+let recES = null, recEN = null;
+let speakingUntil = 0;       // Timestamp: ignore ASR results until this time (echo suppression)
+let speakingDuration = 0;    // Last TTS duration estimate
+let lastLatencyMs = 0;
+
+const speakers = [
+  { id: 1, name: 'Rodrigo (ES)', lang: 'es-ES', emoji: '🇪🇸', color: '#c9a96e', channel: 'left',  targetLang: 'en-US', panValue: 1 },
+  { id: 2, name: 'Interlocutor (EN)', lang: 'en-US', emoji: '🇺🇸', color: '#5b9bd5', channel: 'right', targetLang: 'es-ES', panValue: -1 }
+];
+
+let channels = { left: { deviceId: '', volume: 0.9 }, right: { deviceId: '', volume: 0.9 } };
+let messages = [];
+let tpVisible = false;
+let tpFontSize = 28;
+
+// ── AUDIO CONTEXT ──────────────────────────────────────
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// ── TTS QUEUE (non-blocking parallel queues per channel) ─
+const ttsQueues = { left: [], right: [] };
+const ttsPlaying = { left: false, right: false };
+
+function enqueueTTS(channel, item) {
+  ttsQueues[channel].push(item);
+  processTTSQueue(channel);
+}
+
+async function processTTSQueue(channel) {
+  if (ttsPlaying[channel] || ttsQueues[channel].length === 0) return;
+  ttsPlaying[channel] = true;
+  const item = ttsQueues[channel].shift();
+  try {
+    await playTTS(item);
+  } catch(e) {
+    console.warn('TTS error:', e);
+  }
+  ttsPlaying[channel] = false;
+  processTTSQueue(channel);
+}
+
+// ── TTS ENGINE SELECTOR ────────────────────────────────
+async function playTTS(item) {
+  const t0 = performance.now();
+
+  // Try Gemini TTS (stereo routing via AudioContext)
+  if (apiKey && currentMode === 'stereo') {
+    const ok = await playGeminiTTS(item);
+    if (ok) { updateLatency(performance.now() - t0 + item.translateMs); return; }
+  }
+
+  // Try Google Translate TTS (device routing via setSinkId)
+  const ok2 = await playGoogleTTS(item);
+  if (ok2) { updateLatency(performance.now() - t0 + item.translateMs); return; }
+
+  // Fallback: Web Speech Synthesis
+  await playSpeechSynthesis(item);
+  updateLatency(performance.now() - t0 + item.translateMs);
+}
+
+// ── GEMINI TTS (PCM via AudioContext + StereoPanner) ───
+async function playGeminiTTS(item) {
+  try {
+    const voiceMap = { 'en-US': 'Aoede', 'es-ES': 'Charon' };
+    const voice = voiceMap[item.lang] || 'Aoede';
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: item.text }] }],
+          generationConfig: {
+            response_modalities: ['AUDIO'],
+            speech_config: {
+              voice_config: { prebuilt_voice_config: { voice_name: voice } }
+            }
+          }
+        })
+      }
+    );
+    if (!resp.ok) return false;
+    const data = await resp.json();
+    const b64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!b64) return false;
+
+    // Decode raw PCM (16-bit LE, 24000Hz, mono)
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const pcm16 = new Int16Array(bytes.buffer);
+
+    const ctx = getAudioCtx();
+    const buf = ctx.createBuffer(1, pcm16.length, 24000);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < pcm16.length; i++) ch[i] = pcm16[i] / 32768.0;
+
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = channels[item.channel].volume;
+
+    const panner = new StereoPannerNode(ctx, { pan: item.panValue });
+    src.connect(gainNode);
+    gainNode.connect(panner);
+    panner.connect(ctx.destination);
+
+    const duration = buf.duration;
+    setEchoSuppression(duration + 0.5);
+    setChannelActive(item.channel, true);
+    updateTTSBadge('gemini');
+
+    await new Promise(resolve => {
+      src.onended = () => {
+        setChannelActive(item.channel, false);
+        resolve();
+      };
+      src.start();
+    });
+    return true;
+  } catch(e) {
+    console.warn('Gemini TTS error:', e);
+    return false;
+  }
+}
+
+// ── GOOGLE TRANSLATE TTS (Audio element + setSinkId) ──
+async function playGoogleTTS(item) {
+  try {
+    const lang = item.lang.split('-')[0];
+    const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(item.text)}&tl=${lang}&client=gtx&ttsspeed=0.9`;
+    const audio = new Audio(url);
+    audio.volume = channels[item.channel].volume;
+    audio.crossOrigin = 'anonymous';
+
+    // Route to specific device if assigned
+    const deviceId = channels[item.channel].deviceId;
+    if (deviceId && audio.setSinkId) {
+      try { await audio.setSinkId(deviceId); } catch(e) {}
+    }
+
+    updateTTSBadge('google');
+    setChannelActive(item.channel, true);
+
+    await new Promise((resolve, reject) => {
+      audio.onended = () => { setChannelActive(item.channel, false); resolve(); };
+      audio.onerror = reject;
+      // Estimate duration for echo suppression
+      audio.oncanplaythrough = () => {
+        setEchoSuppression((audio.duration || 3) + 0.5);
+      };
+      audio.play().catch(reject);
+    });
+    return true;
+  } catch(e) {
+    console.warn('Google TTS error:', e);
+    return false;
+  }
+}
+
+// ── WEB SPEECH SYNTHESIS (fallback) ───────────────────
+function playSpeechSynthesis(item) {
+  return new Promise(resolve => {
+    const utt = new SpeechSynthesisUtterance(item.text);
+    utt.lang = item.lang;
+    utt.volume = channels[item.channel].volume;
+    utt.rate = 0.95;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find(x => x.lang === item.lang) || voices.find(x => x.lang.startsWith(item.lang.split('-')[0]));
+    if (v) utt.voice = v;
+    utt.onstart = () => {
+      setChannelActive(item.channel, true);
+      setEchoSuppression(5); // generous window since we don't know duration
+    };
+    utt.onend = utt.onerror = () => {
+      setChannelActive(item.channel, false);
+      setEchoSuppression(0.4); // short tail
+      resolve();
+    };
+    updateTTSBadge('native');
+    speechSynthesis.speak(utt);
+  });
+}
+
+speechSynthesis.getVoices();
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+
+// ── ECHO SUPPRESSION ───────────────────────────────────
+function setEchoSuppression(seconds) {
+  speakingUntil = Date.now() + seconds * 1000;
+  setSpeakingStatus(true);
+  setTimeout(() => {
+    if (Date.now() >= speakingUntil - 100) setSpeakingStatus(false);
+  }, seconds * 1000 + 100);
+}
+
+function isSpeakingNow() {
+  return Date.now() < speakingUntil;
+}
+
+function setSpeakingStatus(on) {
+  const dot = document.getElementById('sdot');
+  if (on) {
+    dot.className = 'sdot speaking';
+    setStatusText('Reproduciendo traducción...', false);
+  } else if (isRec) {
+    dot.className = 'sdot on';
+    setStatusText('Escuchando (full-duplex)...', true);
+  }
+}
+
+// ── TRANSLATION (GEMINI STREAMING) ───────────────────
+async function translate(text, targetLang, onChunk) {
+  const targetName = targetLang.startsWith('en') ? 'English' : 'Spanish';
+
+  if (apiKey) {
+    // Try streaming first
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents: [{
+            parts: [{ text: `Translate to ${targetName}. Reply ONLY with the translation, nothing else:\n\n${text}` }]
+          }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 400 }
+        })
+      });
+
+      if (resp.ok) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+        let buf = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data:')) continue;
+            const json = line.slice(5).trim();
+            if (json === '[DONE]') continue;
+            try {
+              const obj = JSON.parse(json);
+              const chunk = obj?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (chunk) {
+                fullText += chunk;
+                if (onChunk) onChunk(fullText);
+              }
+            } catch(e) {}
+          }
+        }
+        if (fullText.trim()) return fullText.trim();
+      }
+    } catch(e) { console.warn('Streaming translate error:', e); }
+
+    // Non-streaming fallback
+    try {
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Translate to ${targetName}. Reply ONLY with translation:\n\n${text}` }] }],
+            generationConfig: { temperature: 0.1, maxOutputTokens: 400 }
+          })
+        }
+      );
+      if (resp.ok) {
+        const data = await resp.json();
+        const t = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (t) { if (onChunk) onChunk(t); return t; }
+      }
+    } catch(e) {}
+  }
+
+  // MyMemory fallback
+  try {
+    const pair = targetLang.startsWith('en') ? 'es|en' : 'en|es';
+    const resp = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`);
+    const data = await resp.json();
+    const t = data?.responseData?.translatedText;
+    if (t && t !== 'INVALID LANGUAGE PAIR') { if (onChunk) onChunk(t); return t; }
+  } catch(e) {}
+
+  return '[Error de traducción]';
+}
+
+// ── SPEECH RECOGNITION (FULL-DUPLEX) ─────────────────
+function toggleRec() {
+  isRec ? stopRec() : startRec();
+}
+
+async function startRec() {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) { alert('Usa Google Chrome para compatibilidad total.'); return; }
+
+  try {
+    // Request mic with echo cancellation + noise suppression
+    await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+  } catch(e) { alert('Permite el acceso al micrófono.'); return; }
+
+  isRec = true;
+  updateMainBtn();
+  startBothRec();
+}
+
+function stopRec() {
+  isRec = false;
+  updateMainBtn();
+  if (recES) { try { recES.abort(); } catch(e) {} recES = null; }
+  if (recEN) { try { recEN.abort(); } catch(e) {} recEN = null; }
+  setStatusText('Escucha detenida', false);
+  document.getElementById('sdot').className = 'sdot';
+  hideInterim();
+}
+
+function startBothRec() {
+  if (!isRec) return;
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  // ─ Spanish recognition ─
+  recES = new SpeechRec();
+  recES.lang = 'es-ES';
+  recES.continuous = true;
+  recES.interimResults = true;
+  recES.maxAlternatives = 1;
+
+  recES.onresult = e => handleRecResult(e, 0); // speaker index 0
+  recES.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') console.warn('ASR ES:', e.error); };
+  recES.onend = () => { if (isRec) { recES = null; setTimeout(() => { if (isRec && !recES) { const r = buildRec('es-ES', 0); recES = r; try { r.start(); } catch(ex) {} } }, 200); } };
+
+  // ─ English recognition ─
+  recEN = new SpeechRec();
+  recEN.lang = 'en-US';
+  recEN.continuous = true;
+  recEN.interimResults = true;
+  recEN.maxAlternatives = 1;
+
+  recEN.onresult = e => handleRecResult(e, 1); // speaker index 1
+  recEN.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') console.warn('ASR EN:', e.error); };
+  recEN.onend = () => { if (isRec) { recEN = null; setTimeout(() => { if (isRec && !recEN) { const r = buildRec('en-US', 1); recEN = r; try { r.start(); } catch(ex) {} } }, 200); } };
+
+  try { recES.start(); } catch(e) { console.warn(e); }
+  setTimeout(() => {
+    try { if (recEN) recEN.start(); } catch(e) { console.warn(e); }
+  }, 80); // slight offset to avoid conflict
+
+  document.getElementById('sdot').className = 'sdot on';
+  setStatusText('Escuchando (full-duplex)...', true);
+}
+
+function buildRec(lang, spkIdx) {
+  const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const r = new SpeechRec();
+  r.lang = lang;
+  r.continuous = true;
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  r.onresult = e => handleRecResult(e, spkIdx);
+  r.onerror = e => { if (e.error !== 'no-speech' && e.error !== 'aborted') console.warn(`ASR ${lang}:`, e.error); };
+  r.onend = () => {
+    if (!isRec) return;
+    if (lang === 'es-ES') recES = null; else recEN = null;
+    setTimeout(() => {
+      if (!isRec) return;
+      const newR = buildRec(lang, spkIdx);
+      if (lang === 'es-ES') recES = newR; else recEN = newR;
+      try { newR.start(); } catch(ex) {}
+    }, 200);
+  };
+  return r;
+}
+
+let lastInterimSpk = -1;
+
+function handleRecResult(event, spkIdx) {
+  // Full-duplex echo suppression: discard if we're playing TTS
+  if (isSpeakingNow()) return;
+
+  const speaker = speakers[spkIdx];
+  let interim = '';
+  let finalText = '';
+
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const res = event.results[i];
+    const text = res[0].transcript;
+    if (res.isFinal) {
+      finalText = text.trim();
+    } else {
+      interim = text.trim();
+    }
+  }
+
+  // Show interim in real-time
+  if (interim && !finalText) {
+    showInterim(spkIdx, interim, false);
+    waveOn(spkIdx);
+    setStatusText(`${speaker.emoji} ${speaker.name} hablando...`, true);
+    return;
+  }
+
+  if (finalText) {
+    hideInterim();
+    waveOff(spkIdx);
+    processSpoken(finalText, spkIdx);
+  }
+}
+
+// ── PROCESS SPOKEN TEXT ────────────────────────────────
+async function processSpoken(text, spkIdx) {
+  if (!text || text.length < 2) return;
+  const t0 = performance.now();
+  const speaker = speakers[spkIdx];
+
+  // Remove empty state
+  const emptyEl = document.getElementById('emptyState');
+  if (emptyEl) emptyEl.remove();
+
+  const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  const msg = {
+    id: msgId, spkIdx,
+    originalText: text,
+    translatedText: '',
+    timestamp: new Date(),
+    latencyMs: 0
+  };
+  messages.push(msg);
+  addMsgToFeed(msg, true);
+  if (tpVisible) addTpLine(speaker, text);
+
+  setStatusText(`${speaker.emoji} Traduciendo con streaming...`, true);
+  document.getElementById('sdot').className = 'sdot busy';
+
+  let translateStarted = performance.now();
+  let firstChunkReceived = false;
+
+  const translation = await translate(text, speaker.targetLang, (partial) => {
+    if (!firstChunkReceived) {
+      firstChunkReceived = true;
+      msg.latencyMs = Math.round(performance.now() - translateStarted);
+    }
+    msg.translatedText = partial;
+    updateMsgTranslation(msgId, partial, false);
+    updateTpTranslation(msgId, partial);
+  });
+
+  const totalMs = Math.round(performance.now() - t0);
+  msg.latencyMs = totalMs;
+  msg.translatedText = translation;
+  updateMsgTranslation(msgId, translation, true, totalMs);
+  updateTpTranslation(msgId, translation);
+  updateLatency(totalMs);
+
+  document.getElementById('sdot').className = 'sdot on';
+  setStatusText('Escuchando (full-duplex)...', true);
+
+  // Enqueue TTS on the correct channel (non-blocking, parallel)
+  enqueueTTS(speaker.channel, {
+    text: translation,
+    lang: speaker.targetLang,
+    channel: speaker.channel,
+    panValue: speaker.panValue,
+    translateMs: totalMs
+  });
+}
+
+// ── DEVICE DETECTION ──────────────────────────────────
+async function loadDevices() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devs.filter(d => d.kind === 'audiooutput');
+    const lSel = document.getElementById('leftSelect');
+    const rSel = document.getElementById('rightSelect');
+    while (lSel.options.length > 1) lSel.remove(1);
+    while (rSel.options.length > 1) rSel.remove(1);
+    outputs.forEach(dev => {
+      const label = dev.label || `Dispositivo ${dev.deviceId.slice(0,8)}`;
+      [lSel, rSel].forEach(sel => {
+        const opt = document.createElement('option');
+        opt.value = dev.deviceId;
+        opt.textContent = label;
+        sel.appendChild(opt);
+      });
+    });
+    if (channels.left.deviceId) lSel.value = channels.left.deviceId;
+    if (channels.right.deviceId) rSel.value = channels.right.deviceId;
+
+    const isBT = outputs.some(d => /bluetooth|bt|airpod|galaxy buds|buds|sony|jabra|bose/i.test(d.label));
+    document.getElementById('devInfo').textContent =
+      `${outputs.length} dispositivo(s) de salida detectados${isBT ? ' · 🎧 Bluetooth detectado' : ''}`;
+  } catch(e) {
+    document.getElementById('devInfo').textContent = '⚠️ Permite micrófono para detectar dispositivos';
+  }
+}
+
+loadDevices();
+navigator.mediaDevices?.addEventListener('devicechange', loadDevices);
+
+function assignChannel(side, deviceId) {
+  channels[side].deviceId = deviceId;
+  localStorage.setItem('lv_channel_' + side, deviceId);
+}
+
+function setVol(side, v) {
+  channels[side].volume = parseFloat(v);
+  document.getElementById(side + 'VolVal').textContent = Math.round(v * 100) + '%';
+}
+
+// ── TEST CHANNELS ─────────────────────────────────────
+function testChannel(side) {
+  const item = side === 'left'
+    ? { text: 'This is the left channel. The English speaker will hear through here.', lang: 'en-US', channel: 'left', panValue: -1, translateMs: 0 }
+    : { text: 'Este es el canal derecho. El hablante español escuchará por aquí.', lang: 'es-ES', channel: 'right', panValue: 1, translateMs: 0 };
+  enqueueTTS(side, item);
+}
+
+// ── MODE SWITCHING ────────────────────────────────────
+const modeDescMap = {
+  stereo: 'Canal izq → traducción ES→EN · Canal der → traducción EN→ES · Usa audífonos estéreo',
+  dual: 'Cada dispositivo recibe su propio idioma · Sincronización vía BroadcastChannel',
+  fallback: 'Sin audífonos → traducción por altavoz alternando canales'
+};
+const modeIndMap = { stereo: 'ESTÉREO', dual: 'DUAL', fallback: 'ALTAVOZ' };
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode' + mode.charAt(0).toUpperCase() + mode.slice(1) + 'Bt').classList.add('active');
+  document.getElementById('modeDesc').textContent = modeDescMap[mode];
+  document.getElementById('modeInd').textContent = modeIndMap[mode];
+
+  if (mode === 'dual') setupDualDeviceMode();
+}
+
+// Dual device mode via BroadcastChannel
+let bc = null;
+function setupDualDeviceMode() {
+  if (!window.BroadcastChannel) return;
+  bc = new BroadcastChannel('lingua_voice_v4');
+  bc.onmessage = (e) => {
+    if (e.data.type === 'tts') {
+      // This device receives a TTS command from the other device
+      enqueueTTS(e.data.channel, e.data.item);
+    }
+  };
+}
+
+// ── UI HELPERS ────────────────────────────────────────
+function addMsgToFeed(msg, loading) {
+  const sp = speakers[msg.spkIdx];
+  const feed = document.getElementById('feed');
+  const div = document.createElement('div');
+  div.className = 'msg';
+  div.id = msg.id;
+  div.style.setProperty('--c', sp.color);
+  const src = sp.lang.startsWith('es') ? 'ES' : 'EN';
+  const tgt = src === 'ES' ? 'EN' : 'ES';
+  const time = msg.timestamp.toLocaleTimeString('es', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  div.innerHTML = `
+    <div class="mav" style="border-color:${sp.color};color:${sp.color}">${sp.emoji}</div>
+    <div class="mbody">
+      <div class="mmeta">
+        <span class="mnm" style="color:${sp.color}">${esc(sp.name)}</span>
+        <span class="mlb">${src}→${tgt}</span>
+        <span class="mtm">${time}</span>
+      </div>
+      <div class="morig">${esc(msg.originalText)}</div>
+      <div class="mtr" id="tr-${msg.id}">${loading ? '<span class="mspin"><span class="spin">⟳</span> traduciendo…</span>' : ''}</div>
+    </div>`;
+  feed.appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function updateMsgTranslation(msgId, text, done, latMs) {
+  const div = document.getElementById('tr-' + msgId);
+  if (!div) return;
+  div.className = 'mtr ' + (done ? 'done' : 'streaming');
+  const msg = messages.find(m => m.id === msgId);
+  const sp = msg ? speakers[msg.spkIdx] : null;
+  let html = esc(text);
+  if (!done) html += ' <span class="streaming-dot"></span>';
+  if (done && latMs !== undefined) {
+    const cls = latMs < 800 ? 'fast' : latMs < 2000 ? 'med' : 'slow';
+    html += ` <span class="mlat ${cls}">${latMs}ms</span>`;
+  }
+  div.innerHTML = html;
+  if (done && sp) {
+    const btn = document.createElement('button');
+    btn.className = 'mspk';
+    btn.textContent = '🔊';
+    btn.onclick = () => enqueueTTS(sp.channel, { text, lang: sp.targetLang, channel: sp.channel, panValue: sp.panValue, translateMs: 0 });
+    div.appendChild(btn);
+  }
+}
+
+let tpLineIds = {};
+function addTpLine(speaker, original) {
+  const container = document.getElementById('tpContent');
+  const placeholder = container.querySelector('[data-placeholder]');
+  if (placeholder) placeholder.remove();
+  const id = 'tpline-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'tp-line';
+  div.id = id;
+  div.innerHTML = `
+    <span class="tp-speaker" style="color:${speaker.color}">${speaker.emoji} ${speaker.name}</span>
+    <span class="tp-original">${esc(original)}</span>
+    <span class="tp-arrow">→</span>
+    <span class="tp-translated" id="tptr-${id}"><span class="streaming-dot"></span></span>`;
+  container.appendChild(div);
+  while (container.children.length > 3) container.removeChild(container.firstChild);
+  return id;
+}
+
+// Map msgId → tpLineId
+let msgToTpLine = {};
+function updateTpTranslation(msgId, text) {
+  // Find the tp line associated with this message
+  const lineId = msgToTpLine[msgId];
+  if (!lineId) return;
+  const span = document.getElementById('tptr-' + lineId);
+  if (span) span.innerHTML = esc(text);
+}
+
+// Override processSpoken to record tp line
+const _origProcessSpoken = processSpoken;
+
+// Patch: track tpLine in addMsgToFeed context
+// We do it by patching addTpLine to return lineId, and storing in msgToTpLine
+// (already done above, but we need to call addTpLine in processSpoken and save the mapping)
+// Re-patch processSpoken:
+const processSpokenOrig = processSpoken;
+
+// Actually let's not re-patch, let's just fix the original one.
+// The original processSpoken calls addTpLine and we need to map msgId → lineId
+// Since we defined processSpoken inline, let's just redefine it cleanly:
+
+// (processSpoken is already defined above with the correct tp call — 
+// we just need to capture the lineId and store in msgToTpLine)
+// For cleanliness, let's override the tp addTpLine call:
+
+function addTpLineForMsg(msgId, speaker, original) {
+  const container = document.getElementById('tpContent');
+  const placeholder = container.querySelector('div[style]');
+  if (placeholder && container.children.length === 1) container.innerHTML = '';
+  const id = 'tpline-' + msgId;
+  const div = document.createElement('div');
+  div.className = 'tp-line';
+  div.id = id;
+  div.innerHTML = `
+    <span class="tp-speaker" style="color:${speaker.color}">${speaker.emoji} ${speaker.name}</span>
+    <span class="tp-original">${esc(original)}</span>
+    <span class="tp-arrow">→</span>
+    <span class="tp-translated" id="tptr-${id}"><span class="streaming-dot"></span></span>`;
+  container.appendChild(div);
+  while (container.children.length > 3) container.removeChild(container.firstChild);
+}
+
+function updateTpTranslationById(msgId, text) {
+  const span = document.getElementById('tptr-tpline-' + msgId);
+  if (span) span.innerHTML = esc(text);
+}
+
+// Redefine processSpoken with proper tp integration
+async function processSpoken(text, spkIdx) {
+  if (!text || text.length < 2) return;
+  const t0 = performance.now();
+  const speaker = speakers[spkIdx];
+
+  const emptyEl = document.getElementById('emptyState');
+  if (emptyEl) emptyEl.remove();
+
+  const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  const msg = { id: msgId, spkIdx, originalText: text, translatedText: '', timestamp: new Date(), latencyMs: 0 };
+  messages.push(msg);
+  addMsgToFeed(msg, true);
+  if (tpVisible) addTpLineForMsg(msgId, speaker, text);
+
+  setStatusText(`${speaker.emoji} Traduciendo...`, true);
+  document.getElementById('sdot').className = 'sdot busy';
+
+  let firstChunk = false;
+
+  const translation = await translate(text, speaker.targetLang, (partial) => {
+    if (!firstChunk) { firstChunk = true; }
+    msg.translatedText = partial;
+    updateMsgTranslation(msgId, partial, false);
+    if (tpVisible) updateTpTranslationById(msgId, partial);
+  });
+
+  const totalMs = Math.round(performance.now() - t0);
+  msg.latencyMs = totalMs;
+  msg.translatedText = translation;
+  updateMsgTranslation(msgId, translation, true, totalMs);
+  if (tpVisible) updateTpTranslationById(msgId, translation);
+  updateLatency(totalMs);
+
+  document.getElementById('sdot').className = 'sdot on';
+  setStatusText('Escuchando (full-duplex)...', true);
+
+  const ttsItem = { text: translation, lang: speaker.targetLang, channel: speaker.channel, panValue: speaker.panValue, translateMs: totalMs };
+  enqueueTTS(speaker.channel, ttsItem);
+
+  // Broadcast to second device in dual mode
+  if (currentMode === 'dual' && bc) bc.postMessage({ type: 'tts', channel: speaker.channel, item: ttsItem });
+}
+
+// ── INTERIM DISPLAY ───────────────────────────────────
+function showInterim(spkIdx, text, final) {
+  const sp = speakers[spkIdx];
+  const bar = document.getElementById('interimBar');
+  document.getElementById('interimSpk').textContent = `${sp.emoji} ${sp.lang.startsWith('es') ? 'ES' : 'EN'}`;
+  document.getElementById('interimSpk').style.color = sp.color;
+  document.getElementById('interimTxt').innerHTML = esc(text) + (final ? '' : ' <span class="streaming-dot"></span>');
+  bar.classList.add('visible');
+}
+
+function hideInterim() {
+  document.getElementById('interimBar').classList.remove('visible');
+}
+
+// ── LATENCY BADGE ─────────────────────────────────────
+function updateLatency(ms) {
+  lastLatencyMs = ms;
+  const badge = document.getElementById('latBadge');
+  const cls = ms < 800 ? 'fast' : ms < 2000 ? 'med' : 'slow';
+  badge.className = 'lat-badge ' + cls;
+  badge.textContent = `⏱ ${ms}ms`;
+}
+
+function updateTTSBadge(engine) {
+  const badge = document.getElementById('ttsBadge');
+  if (engine === 'gemini') { badge.className = 'tts-badge gemini'; badge.textContent = '✨ TTS: Gemini'; }
+  else if (engine === 'google') { badge.className = 'tts-badge google'; badge.textContent = '🔵 TTS: Google'; }
+  else { badge.className = 'tts-badge native'; badge.textContent = '🔊 TTS: Nativo'; }
+}
+
+function setChannelActive(ch, on) {
+  document.getElementById(ch + 'ActiveBadge').className = 'channel-active-badge' + (on ? ' active' : '');
+}
+
+// ── MAIN BUTTON ───────────────────────────────────────
+function updateMainBtn() {
+  const btn = document.getElementById('mainBtn');
+  const lbl = document.getElementById('mainLbl');
+  if (isRec) { btn.className = 'btn-main listening'; lbl.textContent = 'DETENER'; }
+  else { btn.className = 'btn-main idle'; lbl.textContent = 'ESCUCHAR'; }
+}
+
+function setStatusText(text, on) {
+  const el = document.getElementById('stxt');
+  el.textContent = text;
+  el.className = 'stxt' + (on ? ' on' : '');
+}
+
+// ── SPEAKER CARDS ─────────────────────────────────────
+function renderCards() {
+  const c = document.getElementById('spcards');
+  c.innerHTML = '';
+  speakers.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'spc';
+    d.id = 'spc-' + s.id;
+    d.style.setProperty('--c', s.color);
+    d.innerHTML = `
+      <div class="spc-top">
+        <div class="spc-av" style="border-color:${s.color};color:${s.color}">${s.emoji}</div>
+        <div class="spc-info">
+          <div class="spc-nm">${esc(s.name)}</div>
+          <div class="spc-lg">${s.lang.startsWith('es') ? 'Español → Inglés' : 'English → Español'}</div>
+          <div class="spc-live" id="live-${s.id}">🔴 hablando...</div>
+        </div>
+      </div>
+      <div class="spc-wave" id="wave-${s.id}">
+        ${Array(14).fill(0).map(() => `<div class="wb" style="height:${3+Math.random()*14}px"></div>`).join('')}
+      </div>`;
+    c.appendChild(d);
+  });
+}
+
+function waveOn(idx) {
+  speakers.forEach((_, i) => waveOff(i));
+  const s = speakers[idx];
+  document.getElementById('spc-' + s.id)?.classList.add('speaking', 'active');
+}
+
+function waveOff(idx) {
+  const s = speakers[idx];
+  document.getElementById('spc-' + s.id)?.classList.remove('speaking', 'active');
+}
+
+setInterval(() => {
+  if (!isRec) return;
+  speakers.forEach(sp => {
+    const w = document.getElementById('wave-' + sp.id);
+    if (w?.closest('.spc')?.classList.contains('speaking')) {
+      w.querySelectorAll('.wb').forEach(b => { b.style.height = (3 + Math.random() * 22) + 'px'; });
+    }
+  });
+}, 90);
+
+// ── TELEPROMPTER ──────────────────────────────────────
+function toggleTp() {
+  tpVisible = !tpVisible;
+  document.getElementById('tpWrap').classList.toggle('visible', tpVisible);
+  document.getElementById('tpBtn').classList.toggle('active', tpVisible);
+}
+function tpSize(d) {
+  tpFontSize = Math.max(18, Math.min(52, tpFontSize + d));
+  document.getElementById('tpWrap').style.setProperty('--tpsz', tpFontSize + 'px');
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function clearFeed() {
+  messages = [];
+  document.getElementById('feed').innerHTML = `<div class="empty" id="emptyState"><div class="empty-i">🎙</div><p>La conversación aparecerá aquí</p></div>`;
+  document.getElementById('tpContent').innerHTML = `<div style="font-size:26px;color:var(--dim);text-align:center;padding:14px 0" data-placeholder>Subtítulos aparecerán aquí...</div>`;
+}
+
+// ── API KEY ───────────────────────────────────────────
+(function(){
+  if (!apiKey) return;
+  document.getElementById('keyInput').value = apiKey;
+  showKst('ok', '✓ Guardada');
+})();
+
+function saveKey() {
+  const v = document.getElementById('keyInput').value.trim();
+  if (!v || v.length < 15) { showKst('err', '✗ Muy corta'); return; }
+  if (!v.startsWith('AIza')) { showKst('err', '✗ Debe ser AIza...'); return; }
+  apiKey = v;
+  localStorage.setItem('ra_gemini', v);
+  showKst('ok', '✓ Guardada');
+}
+
+function showKst(t, txt) {
+  const el = document.getElementById('kst');
+  el.className = 'kst ' + t;
+  el.textContent = txt;
+}
+
+// Restore saved channel assignments
+['left','right'].forEach(side => {
+  const saved = localStorage.getItem('lv_channel_' + side);
+  if (saved) channels[side].deviceId = saved;
+});
+
+// ── INIT ──────────────────────────────────────────────
+renderCards();
+</script>
+</body>
+</html>
